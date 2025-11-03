@@ -147,7 +147,7 @@ node scripts/create-new.js 002 "neon waves" "Jane Doe"
    pieces/001-title.html
 
 3. Add your code
-   Between the "YOUR CODE STARTS HERE" comments
+   Between the "MAIN ANIMATION CODE" comments
 
 4. Copy helpers as needed
    From utils/helper.js
@@ -426,8 +426,5 @@ art-series/
 └── utils/
     └── helper.js          ← Reusable helper functions
 ```
-
-**Current Count:** 1 piece created
-**Next Number:** 002
 
 Happy creating! 🎨
