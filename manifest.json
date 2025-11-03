@@ -1,0 +1,240 @@
+{
+  "generated": "2025-11-03T11:49:38.672Z",
+  "count": 26,
+  "pieces": [
+    {
+      "filename": "001-cosmic-waves.html",
+      "path": "pieces/001-cosmic-waves.html",
+      "number": "001",
+      "title": "cosmic-waves",
+      "author": "@wisdomabioye",
+      "created": "2025-10-25",
+      "description": "Add description here"
+    },
+    {
+      "filename": "002-fireworks-explosion.html",
+      "path": "pieces/002-fireworks-explosion.html",
+      "number": "002",
+      "title": "fireworks-explosion",
+      "author": "@wisdomabioye",
+      "created": "2025-10-26",
+      "description": "Particle-based fireworks with explosions, trails, and gravity physics"
+    },
+    {
+      "filename": "003-smoke-simulation.html",
+      "path": "pieces/003-smoke-simulation.html",
+      "number": "003",
+      "title": "smoke-simulation",
+      "author": "@wisdomabioye",
+      "created": "2025-10-27",
+      "description": "Realistic smoke particle system with turbulent flow, expansion, and fade effects"
+    },
+    {
+      "filename": "004-flocking-birds.html",
+      "path": "pieces/004-flocking-birds.html",
+      "number": "004",
+      "title": "flocking-birds",
+      "author": "@wisdomabioye",
+      "created": "2025-10-28",
+      "description": "Boids algorithm simulation with separation, alignment, and cohesion rules"
+    },
+    {
+      "filename": "005-starfield-warp.html",
+      "path": "pieces/005-starfield-warp.html",
+      "number": "005",
+      "title": "starfield-warp",
+      "author": "@wisdomabioye",
+      "created": "2025-10-29",
+      "description": "Hyperspace warp effect with 3D perspective and streaking stars"
+    },
+    {
+      "filename": "006-magnetic-field-particles.html",
+      "path": "pieces/006-magnetic-field-particles.html",
+      "number": "006",
+      "title": "magnetic-field-particles",
+      "author": "@wisdomabioye",
+      "created": "2025-10-30",
+      "description": "Particles flowing along magnetic field lines between poles with attraction/repulsion forces"
+    },
+    {
+      "filename": "007-dna-helix-particles.html",
+      "path": "pieces/007-dna-helix-particles.html",
+      "number": "007",
+      "title": "dna-helix-particles",
+      "author": "@wisdomabioye",
+      "created": "2025-10-31",
+      "description": "Rotating double helix DNA strand with particles and connecting base pairs"
+    },
+    {
+      "filename": "008-aurora-borealis.html",
+      "path": "pieces/008-aurora-borealis.html",
+      "number": "008",
+      "title": "aurora-borealis",
+      "author": "@wisdomabioye",
+      "created": "2025-11-01",
+      "description": "Aurora Borealis with flowing wave curtains and color gradients"
+    },
+    {
+      "filename": "009-fireflies-at-night.html",
+      "path": "pieces/009-fireflies-at-night.html",
+      "number": "009",
+      "title": "fireflies-at-night",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Glowing fireflies with pulsing lights floating through a dark night scene"
+    },
+    {
+      "filename": "010-pixel-rain.html",
+      "path": "pieces/010-pixel-rain.html",
+      "number": "010",
+      "title": "pixel-rain",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Matrix-style digital rain with falling green characters and glow effects"
+    },
+    {
+      "filename": "011-swarm-intelligence-patterns.html",
+      "path": "pieces/011-swarm-intelligence-patterns.html",
+      "number": "011",
+      "title": "swarm-intelligence-patterns",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Swarm intelligence with emergent patterns from collective behavior"
+    },
+    {
+      "filename": "012-nebula-clouds.html",
+      "path": "pieces/012-nebula-clouds.html",
+      "number": "012",
+      "title": "nebula-clouds",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Colorful nebula clouds with particles, stars, and flowing cosmic gas"
+    },
+    {
+      "filename": "013-sparkler-trails.html",
+      "path": "pieces/013-sparkler-trails.html",
+      "number": "013",
+      "title": "sparkler-trails",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Interactive sparkler with glowing particles, gravity, and trailing embers"
+    },
+    {
+      "filename": "014-sine-wave-symphony.html",
+      "path": "pieces/014-sine-wave-symphony.html",
+      "number": "014",
+      "title": "sine-wave-symphony",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Multiple layered sine waves creating harmonic visual symphony"
+    },
+    {
+      "filename": "015-perlin-noise-flow-fields.html",
+      "path": "pieces/015-perlin-noise-flow-fields.html",
+      "number": "015",
+      "title": "perlin-noise-flow-fields",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Particles following Perlin noise-based vector flow fields"
+    },
+    {
+      "filename": "016-ripple-effects.html",
+      "path": "pieces/016-ripple-effects.html",
+      "number": "016",
+      "title": "ripple-effects",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Expanding concentric ripples with wave interference and color gradients"
+    },
+    {
+      "filename": "017-sound-wave-visualizer.html",
+      "path": "pieces/017-sound-wave-visualizer.html",
+      "number": "017",
+      "title": "sound-wave-visualizer",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Dynamic audio visualizer with frequency bars, waveforms, and circular spectrum"
+    },
+    {
+      "filename": "018-ocean-waves.html",
+      "path": "pieces/018-ocean-waves.html",
+      "number": "018",
+      "title": "ocean-waves",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Layered ocean waves with foam, depth gradients, and shimmer effects"
+    },
+    {
+      "filename": "019-sand-dunes.html",
+      "path": "pieces/019-sand-dunes.html",
+      "number": "019",
+      "title": "sand-dunes",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Desert sand dunes with wind-blown particles, light/shadow, and atmospheric haze"
+    },
+    {
+      "filename": "020-flowing-ribbons.html",
+      "path": "pieces/020-flowing-ribbons.html",
+      "number": "020",
+      "title": "flowing-ribbons",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Elegant 3D flowing ribbons with twisting motion and gradient colors"
+    },
+    {
+      "filename": "021-lava-lamp-simulation.html",
+      "path": "pieces/021-lava-lamp-simulation.html",
+      "number": "021",
+      "title": "lava-lamp-simulation",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Lava lamp with metaball blobs, rising/falling physics, and glowing colors"
+    },
+    {
+      "filename": "022-water-droplet-ripples.html",
+      "path": "pieces/022-water-droplet-ripples.html",
+      "number": "022",
+      "title": "water-droplet",
+      "author": "ripples",
+      "created": "2025-11-02",
+      "description": "Water droplets falling with splash impact, ripple waves, and particle effects"
+    },
+    {
+      "filename": "023-frequency-bars.html",
+      "path": "pieces/023-frequency-bars.html",
+      "number": "022",
+      "title": "frequency-bars",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Animated frequency spectrum bars with smooth transitions and mirror reflection"
+    },
+    {
+      "filename": "024-forest-breeze.html",
+      "path": "pieces/024-forest-breeze.html",
+      "number": "024",
+      "title": "forest-breeze",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Forest trees swaying in the breeze with leaves, grass, and atmospheric wind particles"
+    },
+    {
+      "filename": "025-circular-wave-interference.html",
+      "path": "pieces/025-circular-wave-interference.html",
+      "number": "025",
+      "title": "circular-wave",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Circular wave interference pattern with multiple wave sources creating beautiful constructive and destructive interference"
+    },
+    {
+      "filename": "026-standing-waves.html",
+      "path": "pieces/026-standing-waves.html",
+      "number": "026",
+      "title": "standing-waves",
+      "author": "@wisdomabioye",
+      "created": "2025-11-02",
+      "description": "Standing waves visualization showing nodes (stationary points) and antinodes (maximum oscillation points) with multiple harmonics"
+    }
+  ]
+}

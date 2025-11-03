@@ -1,0 +1,19 @@
+{
+  "name": "art-series",
+  "version": "1.0.0",
+  "description": "Animated art pieces created with vanilla JavaScript and HTML",
+  "scripts": {
+    "new": "node scripts/create-new.js",
+    "manifest": "node scripts/generate-manifest.js",
+    "serve": "python -m http.server 8000",
+    "start": "npm run manifest && npm run serve"
+  },
+  "keywords": [
+    "art",
+    "animation",
+    "canvas",
+    "generative-art"
+  ],
+  "author": "@wisdomabioye",
+  "license": "MIT"
+}

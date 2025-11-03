@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="YOUR_NAME">
+    <meta name="description" content="Art Series #XXX - TITLE">
+    <meta name="created" content="YYYY-MM-DD">
+    <title>TITLE | Art Series #XXX</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #XXX
+         * Title: TITLE
+         * Author: YOUR_NAME
+         * Created: YYYY-MM-DD
+         * Description: Add description here
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Clear canvas or add trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // animation logic here
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series - A collection of animated art and generative pieces">
+    <title>Art Series | Animation Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .stats {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin: 3rem 0 2rem 0;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .pagination-button {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+
+        .pagination-button:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .pagination-button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .items-per-page {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .items-per-page select {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .items-per-page select option {
+            background: #764ba2;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            font-size: 1.2rem;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid rgba(255, 0, 0, 0.5);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            margin: 2rem auto;
+            max-width: 600px;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        .piece-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            animation: slideUp 0.5s ease-out both;
+        }
+
+        .piece-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+        }
+
+        .piece-preview {
+            width: 100%;
+            height: 250px;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .piece-preview iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            pointer-events: none;
+            transform-origin: center center;
+        }
+
+        .piece-info {
+            padding: 1.5rem;
+        }
+
+        .piece-number {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .piece-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: capitalize;
+        }
+
+        .piece-meta {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.75rem;
+        }
+
+        .piece-author {
+            flex: 1;
+        }
+
+        .piece-date {
+            font-size: 0.85rem;
+        }
+
+        .piece-description {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        .view-button {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            margin-top: 1rem;
+            transition: background 0.3s ease;
+        }
+
+        .view-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding: 2rem;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .gallery {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .piece-preview {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 Art Series</h1>
+            <p class="subtitle">Animated art and generative pieces</p>
+            <div class="stats" id="stats">Loading...</div>
+        </header>
+
+        <div id="content">
+            <div class="loading">Loading animations...</div>
+        </div>
+
+        <footer>
+            <p>Created with vanilla JavaScript & HTML Canvas</p>
+            <p>by @wisdomabioye</p>
+        </footer>
+    </div>
+
+    <script>
+        // Pagination state
+        let currentPage = 1;
+        let itemsPerPage = 5;
+        let allPieces = [];
+
+        // Load and display the manifest
+        async function loadGallery() {
+            try {
+                const response = await fetch('manifest.json');
+
+                if (!response.ok) {
+                    throw new Error('Manifest not found. Run: npm run manifest');
+                }
+
+                const manifest = await response.json();
+                allPieces = manifest.pieces;
+
+                // Update stats
+                document.getElementById('stats').textContent =
+                    `${manifest.count} piece${manifest.count !== 1 ? 's' : ''} created`;
+
+                // Create gallery
+                const content = document.getElementById('content');
+
+                if (manifest.count === 0) {
+                    content.innerHTML = `
+                        <div class="error">
+                            <h2>No pieces found</h2>
+                            <p>Create your first piece with:</p>
+                            <code>npm run new 001 "your title"</code>
+                        </div>
+                    `;
+                    return;
+                }
+
+                renderPage();
+
+            } catch (error) {
+                console.error('Error loading gallery:', error);
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        <h2>⚠️ Error Loading Gallery</h2>
+                        <p>${error.message}</p>
+                        <p style="margin-top: 1rem;">
+                            Make sure to generate the manifest first:
+                        </p>
+                        <code style="display: block; margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
+                            npm run manifest
+                        </code>
+                    </div>
+                `;
+                document.getElementById('stats').textContent = 'Error';
+            }
+        }
+
+        function renderPage() {
+            const content = document.getElementById('content');
+            const totalPages = Math.ceil(allPieces.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const piecesToShow = allPieces.slice(startIndex, endIndex);
+
+            console.log('Rendering page:', {
+                currentPage,
+                itemsPerPage,
+                totalPages,
+                totalPieces: allPieces.length,
+                showing: piecesToShow.length
+            });
+
+            // Clear content
+            content.innerHTML = '';
+
+            // Create pagination controls at top
+            const topPagination = createPaginationControls(totalPages);
+            content.appendChild(topPagination);
+
+            // Create gallery
+            const gallery = document.createElement('div');
+            gallery.className = 'gallery';
+
+            piecesToShow.forEach((piece, index) => {
+                const card = document.createElement('div');
+                card.className = 'piece-card';
+                card.style.animationDelay = `${index * 0.05}s`;
+
+                card.innerHTML = `
+                    <div class="piece-preview">
+                        <iframe
+                            src="${piece.path}"
+                            loading="lazy"
+                            sandbox="allow-scripts allow-same-origin"
+                            title="${piece.title}"
+                        ></iframe>
+                    </div>
+                    <div class="piece-info">
+                        <div class="piece-number">#${piece.number}</div>
+                        <h2 class="piece-title">${piece.title}</h2>
+                        ${piece.description && piece.description !== 'Add description here'
+                            ? `<p class="piece-description">${piece.description}</p>`
+                            : ''}
+                        <div class="piece-meta">
+                            <span class="piece-author">by ${piece.author}</span>
+                            ${piece.created ? `<span class="piece-date">${piece.created}</span>` : ''}
+                        </div>
+                        <a href="${piece.path}" class="view-button" target="_blank">
+                            View Full Screen →
+                        </a>
+                    </div>
+                `;
+
+                // Make card clickable
+                card.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('view-button')) {
+                        window.open(piece.path, '_blank');
+                    }
+                });
+
+                gallery.appendChild(card);
+            });
+
+            content.appendChild(gallery);
+
+            // Create pagination controls at bottom
+            const bottomPagination = createPaginationControls(totalPages);
+            content.appendChild(bottomPagination);
+
+            // Scroll to top when page changes
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function createPaginationControls(totalPages) {
+            const paginationDiv = document.createElement('div');
+            paginationDiv.className = 'pagination';
+
+            // Previous button
+            const prevButton = document.createElement('button');
+            prevButton.className = 'pagination-button';
+            prevButton.textContent = '← Previous';
+            prevButton.disabled = currentPage === 1;
+            prevButton.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderPage();
+                }
+            };
+
+            // Page info
+            const pageInfo = document.createElement('div');
+            pageInfo.className = 'pagination-info';
+            const startItem = (currentPage - 1) * itemsPerPage + 1;
+            const endItem = Math.min(currentPage * itemsPerPage, allPieces.length);
+            pageInfo.textContent = `${startItem}-${endItem} of ${allPieces.length}`;
+
+            // Next button
+            const nextButton = document.createElement('button');
+            nextButton.className = 'pagination-button';
+            nextButton.textContent = 'Next →';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderPage();
+                }
+            };
+
+            // Items per page selector
+            const itemsPerPageDiv = document.createElement('div');
+            itemsPerPageDiv.className = 'items-per-page';
+            itemsPerPageDiv.innerHTML = `
+                <label>Items per page:</label>
+                <select id="items-per-page-select">
+                    <option value="5" ${itemsPerPage === 5 ? 'selected' : ''}>5</option>
+                    <option value="6" ${itemsPerPage === 6 ? 'selected' : ''}>6</option>
+                    <option value="12" ${itemsPerPage === 12 ? 'selected' : ''}>12</option>
+                    <option value="24" ${itemsPerPage === 24 ? 'selected' : ''}>24</option>
+                    <option value="48" ${itemsPerPage === 48 ? 'selected' : ''}>48</option>
+                </select>
+            `;
+
+            const select = itemsPerPageDiv.querySelector('select');
+            select.onchange = (e) => {
+                itemsPerPage = parseInt(e.target.value);
+                currentPage = 1; // Reset to first page
+                renderPage();
+            };
+
+            paginationDiv.appendChild(prevButton);
+            paginationDiv.appendChild(pageInfo);
+            paginationDiv.appendChild(nextButton);
+            paginationDiv.appendChild(itemsPerPageDiv);
+
+            return paginationDiv;
+        }
+
+        // Load gallery on page load
+        loadGallery();
+    </script>
+</body>
+</html>
