@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #002 - fireworks-explosion">
+    <meta name="created" content="2025-10-26">
+    <title>fireworks-explosion | Art Series #002</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #002
+         * Title: fireworks-explosion
+         * Author: @wisdomabioye
+         * Created: 2025-10-26
+         * Description: Particle-based fireworks with explosions, trails, and gravity physics
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        // Particle class for explosion particles
+        class Particle {
+            constructor(x, y, color, velocity) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.velocity = velocity;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.015 + 0.015;
+                this.gravity = 0.05;
+                this.friction = 0.98;
+            }
+
+            update() {
+                this.velocity.x *= this.friction;
+                this.velocity.y *= this.friction;
+                this.velocity.y += this.gravity;
+
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.alpha -= this.decay;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Firework rocket class
+        class Firework {
+            constructor(startX, startY, targetX, targetY) {
+                this.x = startX;
+                this.y = startY;
+                this.startX = startX;
+                this.startY = startY;
+                this.targetX = targetX;
+                this.targetY = targetY;
+
+                const angle = Math.atan2(targetY - startY, targetX - startX);
+                const velocity = 8;
+
+                this.velocity = {
+                    x: Math.cos(angle) * velocity,
+                    y: Math.sin(angle) * velocity
+                };
+
+                this.distanceToTarget = this.calculateDistance(startX, startY, targetX, targetY);
+                this.distanceTraveled = 0;
+                this.trail = [];
+                this.trailLength = 15;
+                this.exploded = false;
+            }
+
+            calculateDistance(x1, y1, x2, y2) {
+                return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+            }
+
+            update() {
+                this.trail.push({ x: this.x, y: this.y });
+                if (this.trail.length > this.trailLength) {
+                    this.trail.shift();
+                }
+
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+
+                this.distanceTraveled = this.calculateDistance(
+                    this.startX,
+                    this.startY,
+                    this.x,
+                    this.y
+                );
+
+                if (this.distanceTraveled >= this.distanceToTarget) {
+                    this.explode();
+                    this.exploded = true;
+                }
+            }
+
+            draw() {
+                ctx.save();
+
+                // Draw trail
+                ctx.beginPath();
+                ctx.moveTo(this.trail[0]?.x || this.x, this.trail[0]?.y || this.y);
+                for (let i = 0; i < this.trail.length; i++) {
+                    ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                }
+                ctx.strokeStyle = `rgba(255, 255, 255, ${1 - (1 / this.trail.length)})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Draw rocket
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = 'white';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = 'white';
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            explode() {
+                const particleCount = Math.random() * 50 + 100;
+                const colors = [
+                    '#ff0000', '#ff3300', '#ff6600', '#ff9900', '#ffcc00',
+                    '#00ff00', '#00ff99', '#00ffff', '#0099ff', '#0000ff',
+                    '#9900ff', '#ff00ff', '#ff0099', '#ffffff', '#ffff00'
+                ];
+
+                const colorScheme = [];
+                const numColors = Math.floor(Math.random() * 3) + 1;
+                for (let i = 0; i < numColors; i++) {
+                    colorScheme.push(colors[Math.floor(Math.random() * colors.length)]);
+                }
+
+                for (let i = 0; i < particleCount; i++) {
+                    const angle = (Math.PI * 2 * i) / particleCount;
+                    const velocity = Math.random() * 6 + 2;
+
+                    particles.push(new Particle(
+                        this.x,
+                        this.y,
+                        colorScheme[Math.floor(Math.random() * colorScheme.length)],
+                        {
+                            x: Math.cos(angle) * velocity,
+                            y: Math.sin(angle) * velocity
+                        }
+                    ));
+                }
+            }
+        }
+
+        const fireworks = [];
+        const particles = [];
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Create fade effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw fireworks
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                fireworks[i].update();
+                fireworks[i].draw();
+
+                if (fireworks[i].exploded) {
+                    fireworks.splice(i, 1);
+                }
+            }
+
+            // Update and draw particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+
+                if (particles[i].alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Auto-launch fireworks
+        function autoLaunch() {
+            if (Math.random() < 0.05) {
+                const targetX = Math.random() * canvas.width;
+                const targetY = Math.random() * canvas.height * 0.5;
+                fireworks.push(new Firework(
+                    canvas.width / 2,
+                    canvas.height,
+                    targetX,
+                    targetY
+                ));
+            }
+        }
+
+        setInterval(autoLaunch, 100);
+
+        // Click to launch firework
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const targetX = e.clientX - rect.left;
+            const targetY = e.clientY - rect.top;
+
+            fireworks.push(new Firework(
+                canvas.width / 2,
+                canvas.height,
+                targetX,
+                targetY
+            ));
+        });
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
