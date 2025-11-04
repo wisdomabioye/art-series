@@ -1,6 +1,6 @@
 {
-  "generated": "2025-11-03T12:02:40.337Z",
-  "count": 1,
+  "generated": "2025-11-04T09:53:27.175Z",
+  "count": 2,
   "pieces": [
     {
       "filename": "001-cosmic-waves.html",
@@ -10,6 +10,15 @@
       "author": "@wisdomabioye",
       "created": "2025-10-25",
       "description": "Add description here"
+    },
+    {
+      "filename": "002-fireworks-explosion.html",
+      "path": "pieces/002-fireworks-explosion.html",
+      "number": "002",
+      "title": "fireworks-explosion",
+      "author": "@wisdomabioye",
+      "created": "2025-10-26",
+      "description": "Particle-based fireworks with explosions, trails, and gravity physics"
     }
   ]
 }
