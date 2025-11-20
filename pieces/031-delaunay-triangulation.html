@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #031 - delaunay-triangulation">
+    <meta name="created" content="2025-11-24">
+    <title>delaunay-triangulation | Art Series #031</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #031
+         * Title: delaunay-triangulation
+         * Author: @wisdomabioye
+         * Created: 2025-11-24
+         * Description: Animated Delaunay triangulation with moving points and colorful triangular mesh
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        // Point class
+        class Point {
+            constructor(x, y, vx = 0, vy = 0) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Bounce off edges
+                if (this.x < 0 || this.x > canvas.width) {
+                    this.vx *= -1;
+                    this.x = Math.max(0, Math.min(canvas.width, this.x));
+                }
+                if (this.y < 0 || this.y > canvas.height) {
+                    this.vy *= -1;
+                    this.y = Math.max(0, Math.min(canvas.height, this.y));
+                }
+            }
+        }
+
+        // Triangle class
+        class Triangle {
+            constructor(p1, p2, p3) {
+                this.p1 = p1;
+                this.p2 = p2;
+                this.p3 = p3;
+                this.calculateCircumcircle();
+            }
+
+            calculateCircumcircle() {
+                const ax = this.p1.x, ay = this.p1.y;
+                const bx = this.p2.x, by = this.p2.y;
+                const cx = this.p3.x, cy = this.p3.y;
+
+                const d = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
+
+                if (Math.abs(d) < 1e-10) {
+                    this.circumX = ax;
+                    this.circumY = ay;
+                    this.circumRadius = Infinity;
+                    return;
+                }
+
+                const ux = ((ax * ax + ay * ay) * (by - cy) +
+                           (bx * bx + by * by) * (cy - ay) +
+                           (cx * cx + cy * cy) * (ay - by)) / d;
+                const uy = ((ax * ax + ay * ay) * (cx - bx) +
+                           (bx * bx + by * by) * (ax - cx) +
+                           (cx * cx + cy * cy) * (bx - ax)) / d;
+
+                this.circumX = ux;
+                this.circumY = uy;
+                this.circumRadius = Math.sqrt((ux - ax) ** 2 + (uy - ay) ** 2);
+            }
+
+            containsPoint(point) {
+                return this.p1 === point || this.p2 === point || this.p3 === point;
+            }
+
+            isPointInCircumcircle(point) {
+                const dx = point.x - this.circumX;
+                const dy = point.y - this.circumY;
+                return dx * dx + dy * dy <= this.circumRadius * this.circumRadius;
+            }
+
+            sharesEdge(other) {
+                let shared = 0;
+                if (other.containsPoint(this.p1)) shared++;
+                if (other.containsPoint(this.p2)) shared++;
+                if (other.containsPoint(this.p3)) shared++;
+                return shared === 2;
+            }
+        }
+
+        // Bowyer-Watson algorithm for Delaunay triangulation
+        function delaunay(points) {
+            if (points.length < 3) return [];
+
+            // Create super-triangle that contains all points
+            const minX = Math.min(...points.map(p => p.x));
+            const minY = Math.min(...points.map(p => p.y));
+            const maxX = Math.max(...points.map(p => p.x));
+            const maxY = Math.max(...points.map(p => p.y));
+
+            const dx = maxX - minX;
+            const dy = maxY - minY;
+            const deltaMax = Math.max(dx, dy);
+            const midX = (minX + maxX) / 2;
+            const midY = (minY + maxY) / 2;
+
+            const p1 = new Point(midX - 20 * deltaMax, midY - deltaMax, 0, 0);
+            const p2 = new Point(midX, midY + 20 * deltaMax, 0, 0);
+            const p3 = new Point(midX + 20 * deltaMax, midY - deltaMax, 0, 0);
+
+            const triangulation = [new Triangle(p1, p2, p3)];
+
+            // Add each point one at a time
+            for (const point of points) {
+                const badTriangles = [];
+
+                // Find all triangles whose circumcircle contains the point
+                for (const triangle of triangulation) {
+                    if (triangle.isPointInCircumcircle(point)) {
+                        badTriangles.push(triangle);
+                    }
+                }
+
+                // Find the boundary of the polygonal hole
+                const polygon = [];
+                for (const triangle of badTriangles) {
+                    const edges = [
+                        [triangle.p1, triangle.p2],
+                        [triangle.p2, triangle.p3],
+                        [triangle.p3, triangle.p1]
+                    ];
+
+                    for (const [p1, p2] of edges) {
+                        let shared = false;
+                        for (const other of badTriangles) {
+                            if (other === triangle) continue;
+                            if ((other.containsPoint(p1) && other.containsPoint(p2))) {
+                                shared = true;
+                                break;
+                            }
+                        }
+                        if (!shared) {
+                            polygon.push([p1, p2]);
+                        }
+                    }
+                }
+
+                // Remove bad triangles
+                for (const triangle of badTriangles) {
+                    const index = triangulation.indexOf(triangle);
+                    if (index > -1) {
+                        triangulation.splice(index, 1);
+                    }
+                }
+
+                // Re-triangulate the polygonal hole
+                for (const [p1, p2] of polygon) {
+                    triangulation.push(new Triangle(p1, p2, point));
+                }
+            }
+
+            // Remove triangles that share vertices with super-triangle
+            return triangulation.filter(t =>
+                !t.containsPoint(p1) &&
+                !t.containsPoint(p2) &&
+                !t.containsPoint(p3)
+            );
+        }
+
+        // Animation variables
+        let time = 0;
+        const points = [];
+        const numPoints = 40;
+
+        // Color palette
+        const colors = [
+            '#FF006E', '#8338EC', '#3A86FF', '#06FFA5', '#FFBE0B',
+            '#FB5607', '#FF1654', '#4ECDC4', '#95E1D3', '#F38181'
+        ];
+
+        function initPoints() {
+            points.length = 0;
+            for (let i = 0; i < numPoints; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 0.5 + Math.random() * 1;
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+                points.push(new Point(x, y, vx, vy));
+            }
+        }
+
+        // Calculate triangle center
+        function getTriangleCenter(triangle) {
+            return {
+                x: (triangle.p1.x + triangle.p2.x + triangle.p3.x) / 3,
+                y: (triangle.p1.y + triangle.p2.y + triangle.p3.y) / 3
+            };
+        }
+
+        // Calculate triangle area
+        function getTriangleArea(triangle) {
+            return Math.abs(
+                (triangle.p2.x - triangle.p1.x) * (triangle.p3.y - triangle.p1.y) -
+                (triangle.p3.x - triangle.p1.x) * (triangle.p2.y - triangle.p1.y)
+            ) / 2;
+        }
+
+        // Initialize
+        initPoints();
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Clear canvas with trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update all points
+            points.forEach(point => point.update());
+
+            // Calculate Delaunay triangulation
+            const triangles = delaunay(points);
+
+            // Draw triangles with colors
+            triangles.forEach((triangle, index) => {
+                const center = getTriangleCenter(triangle);
+                const area = getTriangleArea(triangle);
+
+                // Color based on position and area
+                const colorIndex = Math.floor((center.x + center.y + time * 50) / 200) % colors.length;
+                const color = colors[colorIndex];
+
+                // Parse color for alpha manipulation
+                const opacity = Math.min(0.4, area / 10000);
+
+                // Fill triangle
+                ctx.fillStyle = color.replace(')', `, ${opacity})`).replace('rgb', 'rgba').replace('#', 'rgba(');
+                if (ctx.fillStyle.startsWith('#')) {
+                    // Convert hex to rgba
+                    const r = parseInt(color.substr(1, 2), 16);
+                    const g = parseInt(color.substr(3, 2), 16);
+                    const b = parseInt(color.substr(5, 2), 16);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+                }
+
+                ctx.beginPath();
+                ctx.moveTo(triangle.p1.x, triangle.p1.y);
+                ctx.lineTo(triangle.p2.x, triangle.p2.y);
+                ctx.lineTo(triangle.p3.x, triangle.p3.y);
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw edges with glow
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.globalAlpha = 0.8;
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            });
+
+            // Draw points
+            points.forEach((point, index) => {
+                const colorIndex = index % colors.length;
+                const color = colors[colorIndex];
+
+                // Draw glow
+                const gradient = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, 8);
+                gradient.addColorStop(0, color);
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw center dot
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Update time
+            time += 0.02;
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initPoints(); // Reinitialize points on resize
+        });
+    </script>
+</body>
+</html>

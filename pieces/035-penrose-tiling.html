@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #035 - penrose-tiling">
+    <meta name="created" content="2025-11-28">
+    <title>penrose-tiling | Art Series #035</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #035
+         * Title: penrose-tiling
+         * Author: @wisdomabioye
+         * Created: 2025-11-28
+         * Description: Animated Penrose tiling with kites and darts, aperiodic pattern with color gradients
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        // Golden ratio
+        const PHI = (1 + Math.sqrt(5)) / 2;
+
+        // Tile types
+        const KITE = 0;
+        const DART = 1;
+
+        // Tile class
+        class Tile {
+            constructor(type, vertices) {
+                this.type = type; // KITE or DART
+                this.vertices = vertices; // Array of {x, y} points
+            }
+
+            draw(ctx, time) {
+                if (this.vertices.length < 3) return;
+
+                // Calculate center for color
+                const centerX = this.vertices.reduce((sum, v) => sum + v.x, 0) / this.vertices.length;
+                const centerY = this.vertices.reduce((sum, v) => sum + v.y, 0) / this.vertices.length;
+
+                // Color based on position and tile type
+                const hue = this.type === KITE
+                    ? (centerX * 0.5 + time * 30) % 360
+                    : (centerY * 0.5 + time * 30 + 180) % 360;
+
+                const saturation = 70;
+                const lightness = this.type === KITE ? 50 : 40;
+
+                const fillColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                const strokeColor = `hsl(${hue}, ${saturation}%, ${lightness + 20}%)`;
+
+                // Draw fill
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.moveTo(this.vertices[0].x, this.vertices[0].y);
+                for (let i = 1; i < this.vertices.length; i++) {
+                    ctx.lineTo(this.vertices[i].x, this.vertices[i].y);
+                }
+                ctx.closePath();
+                ctx.globalAlpha = 0.7;
+                ctx.fill();
+
+                // Draw stroke
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = 0.9;
+                ctx.stroke();
+
+                ctx.globalAlpha = 1;
+            }
+
+            // Get center point
+            getCenter() {
+                const x = this.vertices.reduce((sum, v) => sum + v.x, 0) / this.vertices.length;
+                const y = this.vertices.reduce((sum, v) => sum + v.y, 0) / this.vertices.length;
+                return { x, y };
+            }
+        }
+
+        // Helper function to rotate point around origin
+        function rotate(point, angle) {
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            return {
+                x: point.x * cos - point.y * sin,
+                y: point.x * sin + point.y * cos
+            };
+        }
+
+        // Helper function to add points
+        function addPoints(p1, p2) {
+            return { x: p1.x + p2.x, y: p1.y + p2.y };
+        }
+
+        // Helper function to scale point
+        function scalePoint(point, scale) {
+            return { x: point.x * scale, y: point.y * scale };
+        }
+
+        // Subdivide a kite
+        function subdivideKite(vertices) {
+            const [A, B, C, D] = vertices;
+
+            // Split long edges using golden ratio
+            const P = {
+                x: A.x + (B.x - A.x) / PHI,
+                y: A.y + (B.y - A.y) / PHI
+            };
+
+            const Q = {
+                x: A.x + (D.x - A.x) / PHI,
+                y: A.y + (D.y - A.y) / PHI
+            };
+
+            return [
+                new Tile(KITE, [A, P, C, Q]),
+                new Tile(DART, [P, B, C]),
+                new Tile(DART, [Q, C, D])
+            ];
+        }
+
+        // Subdivide a dart
+        function subdivideDart(vertices) {
+            const [A, B, C] = vertices;
+
+            const P = {
+                x: B.x + (A.x - B.x) / PHI,
+                y: B.y + (A.y - B.y) / PHI
+            };
+
+            return [
+                new Tile(DART, [P, B, C]),
+                new Tile(KITE, [A, P, C, A])
+            ];
+        }
+
+        // Generate Penrose tiling
+        function generatePenroseTiling(iterations) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const size = Math.min(canvas.width, canvas.height) * 0.8;
+
+            // Start with 10 kites arranged in a circle (sun pattern)
+            let tiles = [];
+            const numTiles = 10;
+
+            for (let i = 0; i < numTiles; i++) {
+                const angle1 = (Math.PI * 2 / numTiles) * i;
+                const angle2 = (Math.PI * 2 / numTiles) * (i + 1);
+
+                const v1 = { x: centerX, y: centerY };
+                const v2 = {
+                    x: centerX + Math.cos(angle1) * size,
+                    y: centerY + Math.sin(angle1) * size
+                };
+                const v3 = {
+                    x: centerX + Math.cos(angle1 + (angle2 - angle1) / 2) * size * 0.6,
+                    y: centerY + Math.sin(angle1 + (angle2 - angle1) / 2) * size * 0.6
+                };
+                const v4 = {
+                    x: centerX + Math.cos(angle2) * size,
+                    y: centerY + Math.sin(angle2) * size
+                };
+
+                tiles.push(new Tile(KITE, [v1, v2, v3, v4]));
+            }
+
+            // Subdivide tiles
+            for (let iter = 0; iter < iterations; iter++) {
+                const newTiles = [];
+
+                for (const tile of tiles) {
+                    if (tile.type === KITE && tile.vertices.length === 4) {
+                        const subdivided = subdivideKite(tile.vertices);
+                        newTiles.push(...subdivided);
+                    } else if (tile.type === DART && tile.vertices.length === 3) {
+                        const subdivided = subdivideDart(tile.vertices);
+                        newTiles.push(...subdivided);
+                    } else {
+                        newTiles.push(tile);
+                    }
+                }
+
+                tiles = newTiles;
+            }
+
+            return tiles;
+        }
+
+        // Animation variables
+        let time = 0;
+        let tiles = [];
+        const iterations = 4;
+
+        // Initialize
+        tiles = generatePenroseTiling(iterations);
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw all tiles
+            tiles.forEach(tile => {
+                tile.draw(ctx, time);
+            });
+
+            // Update time
+            time += 0.5;
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            tiles = generatePenroseTiling(iterations); // Regenerate tiling
+        });
+    </script>
+</body>
+</html>

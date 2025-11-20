@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #037 - tessellations-morphing">
+    <meta name="created" content="2025-11-30">
+    <title>tessellations-morphing | Art Series #037</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #037
+         * Title: tessellations-morphing
+         * Author: @wisdomabioye
+         * Created: 2025-11-30
+         * Description: Morphing tessellations that smoothly transition between square, triangle, and hexagon patterns
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        let time = 0;
+        const tileSize = 60;
+        const tiles = [];
+
+        // Tile class
+        class Tile {
+            constructor(row, col, centerX, centerY) {
+                this.row = row;
+                this.col = col;
+                this.centerX = centerX;
+                this.centerY = centerY;
+            }
+
+            // Get vertices for square
+            getSquareVertices(size) {
+                const half = size / 2;
+                return [
+                    { x: this.centerX - half, y: this.centerY - half },
+                    { x: this.centerX + half, y: this.centerY - half },
+                    { x: this.centerX + half, y: this.centerY + half },
+                    { x: this.centerX - half, y: this.centerY + half }
+                ];
+            }
+
+            // Get vertices for triangle
+            getTriangleVertices(size) {
+                const height = size * Math.sqrt(3) / 2;
+                const isUpward = (this.row + this.col) % 2 === 0;
+
+                if (isUpward) {
+                    return [
+                        { x: this.centerX, y: this.centerY - height / 1.5 },
+                        { x: this.centerX - size / 2, y: this.centerY + height / 3 },
+                        { x: this.centerX + size / 2, y: this.centerY + height / 3 }
+                    ];
+                } else {
+                    return [
+                        { x: this.centerX, y: this.centerY + height / 1.5 },
+                        { x: this.centerX - size / 2, y: this.centerY - height / 3 },
+                        { x: this.centerX + size / 2, y: this.centerY - height / 3 }
+                    ];
+                }
+            }
+
+            // Get vertices for hexagon
+            getHexagonVertices(size) {
+                const vertices = [];
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI / 3) * i;
+                    vertices.push({
+                        x: this.centerX + size * Math.cos(angle) * 0.7,
+                        y: this.centerY + size * Math.sin(angle) * 0.7
+                    });
+                }
+                return vertices;
+            }
+
+            // Interpolate between two sets of vertices
+            interpolateVertices(v1, v2, t) {
+                const maxLen = Math.max(v1.length, v2.length);
+                const result = [];
+
+                for (let i = 0; i < maxLen; i++) {
+                    const p1 = v1[i % v1.length];
+                    const p2 = v2[i % v2.length];
+
+                    result.push({
+                        x: p1.x + (p2.x - p1.x) * t,
+                        y: p1.y + (p2.y - p1.y) * t
+                    });
+                }
+
+                return result;
+            }
+
+            // Draw the tile with morphing
+            draw(ctx, morphProgress) {
+                // Define which patterns to morph between
+                const patterns = ['square', 'hexagon', 'triangle'];
+                const patternDuration = Math.PI * 2 / patterns.length;
+
+                // Calculate current and next pattern
+                const currentIndex = Math.floor(morphProgress / patternDuration);
+                const nextIndex = (currentIndex + 1) % patterns.length;
+                const t = (morphProgress % patternDuration) / patternDuration;
+
+                // Ease function for smoother transitions
+                const easeT = t < 0.5
+                    ? 2 * t * t
+                    : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+                // Get vertices for current and next patterns
+                let currentVertices, nextVertices;
+
+                const currentPattern = patterns[currentIndex % patterns.length];
+                const nextPattern = patterns[nextIndex % patterns.length];
+
+                switch (currentPattern) {
+                    case 'square':
+                        currentVertices = this.getSquareVertices(tileSize);
+                        break;
+                    case 'triangle':
+                        currentVertices = this.getTriangleVertices(tileSize);
+                        break;
+                    case 'hexagon':
+                        currentVertices = this.getHexagonVertices(tileSize);
+                        break;
+                }
+
+                switch (nextPattern) {
+                    case 'square':
+                        nextVertices = this.getSquareVertices(tileSize);
+                        break;
+                    case 'triangle':
+                        nextVertices = this.getTriangleVertices(tileSize);
+                        break;
+                    case 'hexagon':
+                        nextVertices = this.getHexagonVertices(tileSize);
+                        break;
+                }
+
+                // Interpolate between patterns
+                const vertices = this.interpolateVertices(currentVertices, nextVertices, easeT);
+
+                // Calculate color based on position and time
+                const hue = ((this.row * 30 + this.col * 50 + time * 2) % 360);
+                const saturation = 70;
+                const lightness = 50;
+
+                const fillColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                const strokeColor = `hsl(${hue}, ${saturation}%, ${lightness + 20}%)`;
+
+                // Draw the shape
+                ctx.fillStyle = fillColor;
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 2;
+
+                ctx.beginPath();
+                ctx.moveTo(vertices[0].x, vertices[0].y);
+                for (let i = 1; i < vertices.length; i++) {
+                    ctx.lineTo(vertices[i].x, vertices[i].y);
+                }
+                ctx.closePath();
+
+                ctx.globalAlpha = 0.7;
+                ctx.fill();
+                ctx.globalAlpha = 0.9;
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // Create grid of tiles
+        function createTiles() {
+            tiles.length = 0;
+
+            const cols = Math.ceil(canvas.width / tileSize) + 2;
+            const rows = Math.ceil(canvas.height / tileSize) + 2;
+
+            for (let row = -1; row < rows; row++) {
+                for (let col = -1; col < cols; col++) {
+                    const centerX = col * tileSize + tileSize / 2;
+                    const centerY = row * tileSize + tileSize / 2;
+
+                    tiles.push(new Tile(row, col, centerX, centerY));
+                }
+            }
+        }
+
+        // Initialize
+        createTiles();
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Calculate morph progress
+            const morphProgress = (time * 0.01) % (Math.PI * 2);
+
+            // Draw all tiles
+            tiles.forEach(tile => {
+                tile.draw(ctx, morphProgress);
+            });
+
+            // Update time
+            time += 1;
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            createTiles(); // Recreate tiles on resize
+        });
+    </script>
+</body>
+</html>

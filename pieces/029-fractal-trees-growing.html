@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #029 - fractal-trees-growing">
+    <meta name="created" content="2025-11-22">
+    <title>fractal-trees-growing | Art Series #029</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #029
+         * Title: fractal-trees-growing
+         * Author: @wisdomabioye
+         * Created: 2025-11-22
+         * Description: Organic fractal trees growing with seasonal colors and gentle wind animation
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        // Animation variables
+        let time = 0;
+        let growthProgress = 0;
+        let maxDepth = 10;
+        let trees = [];
+
+        // Seasonal color palettes
+        const seasons = {
+            spring: {
+                trunk: '#654321',
+                leaves: ['#90EE90', '#98FB98', '#FFB6C1', '#FFC0CB', '#FFFFE0']
+            },
+            summer: {
+                trunk: '#8B4513',
+                leaves: ['#228B22', '#32CD32', '#00FF00', '#ADFF2F', '#7FFF00']
+            },
+            autumn: {
+                trunk: '#654321',
+                leaves: ['#FF4500', '#FF6347', '#FFD700', '#FFA500', '#FF8C00']
+            },
+            winter: {
+                trunk: '#4A4A4A',
+                leaves: ['#E0FFFF', '#F0F8FF', '#FFFAFA', '#F5F5F5', '#FFFFFF']
+            }
+        };
+
+        let currentSeason = 'spring';
+        let seasonProgress = 0;
+
+        // Tree class
+        class Tree {
+            constructor(x, y, angle, length) {
+                this.x = x;
+                this.y = y;
+                this.angle = angle;
+                this.length = length;
+                this.branches = [];
+            }
+        }
+
+        // Draw a branch with organic curves
+        function drawBranch(x1, y1, angle, length, depth, maxDepth, windOffset = 0) {
+            if (depth > maxDepth || length < 2) return;
+
+            // Calculate growth factor (animated)
+            const growthFactor = Math.min(1, growthProgress / depth);
+            const currentLength = length * growthFactor;
+
+            if (currentLength < 1) return;
+
+            // Add wind effect (more pronounced at branch tips)
+            const windInfluence = (maxDepth - depth) / maxDepth;
+            const wind = Math.sin(time * 2 + depth * 0.5) * windOffset * windInfluence;
+
+            // Calculate end point
+            const x2 = x1 + Math.cos(angle + wind) * currentLength;
+            const y2 = y1 + Math.sin(angle + wind) * currentLength;
+
+            // Determine color based on depth
+            const season = seasons[currentSeason];
+            let color;
+
+            if (depth < maxDepth - 2) {
+                // Trunk and main branches
+                color = season.trunk;
+                ctx.lineWidth = Math.max(1, (maxDepth - depth) * 0.8);
+            } else {
+                // Leaves
+                const leafColors = season.leaves;
+                color = leafColors[Math.floor((depth + time * 10) % leafColors.length)];
+                ctx.lineWidth = 2;
+
+                // Draw leaf circles at the end
+                if (depth === maxDepth && growthFactor > 0.5) {
+                    const leafSize = 3 + Math.sin(time * 3 + depth) * 1.5;
+                    ctx.fillStyle = color;
+                    ctx.globalAlpha = 0.7;
+                    ctx.beginPath();
+                    ctx.arc(x2, y2, leafSize, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            // Draw the branch
+            ctx.strokeStyle = color;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            // Only continue if this branch has fully grown
+            if (growthFactor >= 1) {
+                // Create branches with some randomness for organic look
+                const angleVariation = 0.1;
+                const leftAngle = angle - (0.3 + Math.sin(time * 0.5 + depth) * angleVariation);
+                const rightAngle = angle + (0.3 + Math.cos(time * 0.5 + depth) * angleVariation);
+
+                const lengthReduction = 0.67 + Math.sin(depth) * 0.05;
+                const newLength = length * lengthReduction;
+
+                // Draw left and right branches
+                drawBranch(x2, y2, leftAngle, newLength, depth + 1, maxDepth, windOffset);
+                drawBranch(x2, y2, rightAngle, newLength, depth + 1, maxDepth, windOffset);
+
+                // Occasionally add a middle branch for variety
+                if (depth < maxDepth - 3 && Math.random() > 0.7) {
+                    const middleAngle = angle + (Math.random() - 0.5) * 0.2;
+                    drawBranch(x2, y2, middleAngle, newLength * 0.8, depth + 1, maxDepth, windOffset);
+                }
+            }
+        }
+
+        // Initialize multiple trees
+        function initTrees() {
+            trees = [];
+            const numTrees = 5;
+
+            for (let i = 0; i < numTrees; i++) {
+                const x = (canvas.width / (numTrees + 1)) * (i + 1);
+                const y = canvas.height - 50;
+                const angle = -Math.PI / 2; // Point upward
+                const length = 80 + Math.random() * 40;
+
+                trees.push({
+                    x,
+                    y,
+                    angle,
+                    length,
+                    windOffset: 0.05 + Math.random() * 0.1
+                });
+            }
+        }
+
+        // Cycle through seasons
+        function updateSeason() {
+            const seasonNames = ['spring', 'summer', 'autumn', 'winter'];
+            const seasonDuration = 500; // frames per season
+
+            seasonProgress++;
+
+            if (seasonProgress >= seasonDuration) {
+                seasonProgress = 0;
+                const currentIndex = seasonNames.indexOf(currentSeason);
+                currentSeason = seasonNames[(currentIndex + 1) % seasonNames.length];
+
+                // Reset growth when season changes
+                growthProgress = 0;
+            }
+        }
+
+        // Initialize
+        initTrees();
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw ground
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+
+            // Update growth progress
+            if (growthProgress < maxDepth + 5) {
+                growthProgress += 0.1;
+            }
+
+            // Update season
+            updateSeason();
+
+            // Draw all trees
+            trees.forEach(tree => {
+                drawBranch(
+                    tree.x,
+                    tree.y,
+                    tree.angle,
+                    tree.length,
+                    0,
+                    maxDepth,
+                    tree.windOffset
+                );
+            });
+
+            // Draw season indicator
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.font = '16px monospace';
+            ctx.fillText(`Season: ${currentSeason.toUpperCase()}`, 20, 30);
+
+            // Update time
+            time += 0.02;
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initTrees(); // Reinitialize trees on resize
+        });
+    </script>
+</body>
+</html>

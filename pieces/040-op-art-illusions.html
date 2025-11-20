@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #040 - op-art-illusions">
+    <meta name="created" content="2025-12-03">
+    <title>op-art-illusions | Art Series #040</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #040
+         * Title: op-art-illusions
+         * Author: @wisdomabioye
+         * Created: 2025-12-03
+         * Description: Animated Op Art with concentric circles, moiré patterns, and wave distortion illusions
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        let time = 0;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        // Draw concentric circles with alternating colors
+        function drawConcentricCircles(x, y, maxRadius, spacing, offset) {
+            for (let r = spacing; r < maxRadius; r += spacing) {
+                // Calculate wave distortion
+                const wave = Math.sin(r * 0.02 + offset) * 5;
+                const adjustedR = r + wave;
+
+                // Alternate between black and white
+                const isBlack = Math.floor((r + offset * 10) / spacing) % 2 === 0;
+                ctx.fillStyle = isBlack ? '#000' : '#FFF';
+                ctx.strokeStyle = isBlack ? '#000' : '#FFF';
+                ctx.lineWidth = spacing;
+
+                ctx.beginPath();
+                ctx.arc(x, y, adjustedR, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+
+        // Draw spiral pattern
+        function drawSpiral(x, y, maxRadius, turns, offset) {
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            const steps = 1000;
+            for (let i = 0; i < steps; i++) {
+                const angle = (i / steps) * Math.PI * 2 * turns + offset;
+                const radius = (i / steps) * maxRadius;
+                const px = x + Math.cos(angle) * radius;
+                const py = y + Math.sin(angle) * radius;
+
+                if (i === 0) {
+                    ctx.moveTo(px, py);
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            }
+
+            ctx.stroke();
+        }
+
+        // Draw parallel lines with wave distortion
+        function drawWavyLines(spacing, amplitude, frequency, offset) {
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 2;
+
+            for (let y = 0; y < canvas.height; y += spacing) {
+                ctx.beginPath();
+
+                for (let x = 0; x < canvas.width; x += 5) {
+                    const wave = Math.sin(x * frequency + offset) * amplitude;
+                    const py = y + wave;
+
+                    if (x === 0) {
+                        ctx.moveTo(x, py);
+                    } else {
+                        ctx.lineTo(x, py);
+                    }
+                }
+
+                ctx.stroke();
+            }
+        }
+
+        // Draw checkerboard with perspective distortion
+        function drawDistortedCheckerboard(size, offset) {
+            const cols = Math.ceil(canvas.width / size) + 2;
+            const rows = Math.ceil(canvas.height / size) + 2;
+
+            for (let row = -1; row < rows; row++) {
+                for (let col = -1; col < cols; col++) {
+                    // Calculate distance from center for distortion
+                    const x = col * size;
+                    const y = row * size;
+                    const dx = x - centerX;
+                    const dy = y - centerY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    // Apply wave distortion
+                    const distortion = Math.sin(dist * 0.02 + offset) * 10;
+                    const adjustedX = x + distortion;
+                    const adjustedY = y + distortion;
+
+                    // Alternate colors
+                    const isBlack = (row + col) % 2 === 0;
+                    ctx.fillStyle = isBlack ? '#000' : '#FFF';
+
+                    ctx.fillRect(adjustedX, adjustedY, size, size);
+                }
+            }
+        }
+
+        // Draw radiating lines
+        function drawRadiatingLines(x, y, count, length, offset) {
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 2;
+
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 / count) * i + offset;
+                const startX = x + Math.cos(angle) * 50;
+                const startY = y + Math.sin(angle) * 50;
+                const endX = x + Math.cos(angle) * length;
+                const endY = y + Math.sin(angle) * length;
+
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+            }
+        }
+
+        // Draw Op Art grid with size variation
+        function drawOpGrid(cellSize, offset) {
+            const cols = Math.ceil(canvas.width / cellSize);
+            const rows = Math.ceil(canvas.height / cellSize);
+
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const x = col * cellSize;
+                    const y = row * cellSize;
+
+                    // Calculate scale based on wave
+                    const dist = Math.sqrt(
+                        Math.pow(x + cellSize / 2 - centerX, 2) +
+                        Math.pow(y + cellSize / 2 - centerY, 2)
+                    );
+                    const scale = 0.5 + Math.sin(dist * 0.01 + offset) * 0.5;
+
+                    const size = cellSize * scale;
+                    const offsetX = (cellSize - size) / 2;
+                    const offsetY = (cellSize - size) / 2;
+
+                    // Draw circle
+                    ctx.fillStyle = '#FFF';
+                    ctx.beginPath();
+                    ctx.arc(x + cellSize / 2, y + cellSize / 2, size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // Draw moiré pattern
+        function drawMoirePattern(spacing, offset1, offset2) {
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.5;
+
+            // First set of lines
+            for (let x = -canvas.width; x < canvas.width * 2; x += spacing) {
+                ctx.beginPath();
+                ctx.moveTo(x + Math.sin(offset1) * 100, 0);
+                ctx.lineTo(x + Math.sin(offset1 + Math.PI) * 100, canvas.height);
+                ctx.stroke();
+            }
+
+            // Second set of lines (rotated)
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(offset2);
+            ctx.translate(-centerX, -centerY);
+
+            for (let x = -canvas.width; x < canvas.width * 2; x += spacing) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+            ctx.globalAlpha = 1;
+        }
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const maxRadius = Math.max(canvas.width, canvas.height) * 0.7;
+
+            // Draw concentric circles (creates illusion of movement)
+            drawConcentricCircles(centerX, centerY, maxRadius, 15, time * 0.5);
+
+            // Draw radiating lines (enhances the illusion)
+            ctx.globalAlpha = 0.7;
+            drawRadiatingLines(centerX, centerY, 36, maxRadius, time * 0.2);
+            ctx.globalAlpha = 1;
+
+            // Draw spiral overlay
+            ctx.globalAlpha = 0.3;
+            drawSpiral(centerX, centerY, maxRadius * 0.6, 8, time * 0.3);
+            ctx.globalAlpha = 1;
+
+            // Draw Op Art grid with pulsing circles
+            ctx.globalAlpha = 0.5;
+            drawOpGrid(40, time * 0.4);
+            ctx.globalAlpha = 1;
+
+            // Update time
+            time += 0.05;
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

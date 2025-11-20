@@ -1,6 +1,6 @@
 {
-  "generated": "2025-11-20T10:12:01.480Z",
-  "count": 26,
+  "generated": "2025-11-20T11:32:56.172Z",
+  "count": 40,
   "pieces": [
     {
       "filename": "001-cosmic-waves.html",
@@ -235,6 +235,132 @@
       "author": "@wisdomabioye",
       "created": "2025-11-19",
       "description": "Standing waves visualization showing nodes (stationary points) and antinodes (maximum oscillation points) with multiple harmonics"
+    },
+    {
+      "filename": "027-rotating-3d-cubes.html",
+      "path": "pieces/027-rotating-3d-cubes.html",
+      "number": "027",
+      "title": "rotating-3d-cubes",
+      "author": "@wisdomabioye",
+      "created": "2025-11-20",
+      "description": "Multiple 3D cubes rotating in different directions with perspective projection"
+    },
+    {
+      "filename": "028-sierpinski-triangle.html",
+      "path": "pieces/028-sierpinski-triangle.html",
+      "number": "028",
+      "title": "sierpinski-triangle",
+      "author": "@wisdomabioye",
+      "created": "2025-11-20",
+      "description": "Animated Sierpinski triangle fractal with color gradients and recursive depth animation"
+    },
+    {
+      "filename": "029-fractal-trees-growing.html",
+      "path": "pieces/029-fractal-trees-growing.html",
+      "number": "029",
+      "title": "fractal-trees-growing",
+      "author": "@wisdomabioye",
+      "created": "2025-11-20",
+      "description": "Organic fractal trees growing with seasonal colors and gentle wind animation"
+    },
+    {
+      "filename": "030-voronoi-diagram.html",
+      "path": "pieces/030-voronoi-diagram.html",
+      "number": "030",
+      "title": "voronoi-diagram",
+      "author": "@wisdomabioye",
+      "created": "2025-11-20",
+      "description": "Animated Voronoi diagram with moving seed points and dynamic color gradients"
+    },
+    {
+      "filename": "031-delaunay-triangulation.html",
+      "path": "pieces/031-delaunay-triangulation.html",
+      "number": "031",
+      "title": "delaunay-triangulation",
+      "author": "@wisdomabioye",
+      "created": "2025-11-20",
+      "description": "Animated Delaunay triangulation with moving points and colorful triangular mesh"
+    },
+    {
+      "filename": "032-spirograph-patterns.html",
+      "path": "pieces/032-spirograph-patterns.html",
+      "number": "032",
+      "title": "spirograph-patterns",
+      "author": "@wisdomabioye",
+      "created": "2025-11-20",
+      "description": "Animated spirograph patterns with parametric equations and rainbow colors"
+    },
+    {
+      "filename": "033-mandala-generator.html",
+      "path": "pieces/033-mandala-generator.html",
+      "number": "033",
+      "title": "mandala-generator",
+      "author": "@wisdomabioye",
+      "created": "2025-11-20",
+      "description": "Animated mandala with radial symmetry, rotating geometric patterns, and gradient colors"
+    },
+    {
+      "filename": "034-hexagonal-grid-waves.html",
+      "path": "pieces/034-hexagonal-grid-waves.html",
+      "number": "034",
+      "title": "hexagonal-grid-waves",
+      "author": "@wisdomabioye",
+      "created": "2025-11-20",
+      "description": "Animated hexagonal grid with wave patterns, color gradients, and ripple effects"
+    },
+    {
+      "filename": "035-penrose-tiling.html",
+      "path": "pieces/035-penrose-tiling.html",
+      "number": "035",
+      "title": "penrose-tiling",
+      "author": "@wisdomabioye",
+      "created": "2025-11-20",
+      "description": "Animated Penrose tiling with kites and darts, aperiodic pattern with color gradients"
+    },
+    {
+      "filename": "036-sacred-geometry.html",
+      "path": "pieces/036-sacred-geometry.html",
+      "number": "036",
+      "title": "sacred-geometry",
+      "author": "@wisdomabioye",
+      "created": "2025-11-20",
+      "description": "Animated sacred geometry with Flower of Life and Metatron's Cube patterns"
+    },
+    {
+      "filename": "037-tessellations-morphing.html",
+      "path": "pieces/037-tessellations-morphing.html",
+      "number": "037",
+      "title": "tessellations-morphing",
+      "author": "@wisdomabioye",
+      "created": "2025-11-20",
+      "description": "Morphing tessellations that smoothly transition between square, triangle, and hexagon patterns"
+    },
+    {
+      "filename": "038-polygon-tunnels.html",
+      "path": "pieces/038-polygon-tunnels.html",
+      "number": "038",
+      "title": "polygon-tunnels",
+      "author": "@wisdomabioye",
+      "created": "2025-11-20",
+      "description": "Animated 3D polygon tunnel with rotating shapes and infinite depth effect"
+    },
+    {
+      "filename": "039-kaleidoscope-effects.html",
+      "path": "pieces/039-kaleidoscope-effects.html",
+      "number": "039",
+      "title": "kaleidoscope-effects",
+      "author": "@wisdomabioye",
+      "created": "2025-11-20",
+      "description": "Animated kaleidoscope with radial symmetry, flowing particles, and rainbow colors"
+    },
+    {
+      "filename": "040-op-art-illusions.html",
+      "path": "pieces/040-op-art-illusions.html",
+      "number": "040",
+      "title": "op-art-illusions",
+      "author": "@wisdomabioye",
+      "created": "2025-11-20",
+      "description": "Animated Op Art with concentric circles, moiré patterns, and wave distortion illusions"
     }
   ]
 }

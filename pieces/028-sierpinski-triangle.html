@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #028 - sierpinski-triangle">
+    <meta name="created" content="2025-11-21">
+    <title>sierpinski-triangle | Art Series #028</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #028
+         * Title: sierpinski-triangle
+         * Author: @wisdomabioye
+         * Created: 2025-11-21
+         * Description: Animated Sierpinski triangle fractal with color gradients and recursive depth animation
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        // Color palette
+        const colors = [
+            '#FF006E', // Hot pink
+            '#8338EC', // Purple
+            '#3A86FF', // Blue
+            '#06FFA5', // Cyan
+            '#FFBE0B', // Yellow
+            '#FB5607'  // Orange
+        ];
+
+        // Animation variables
+        let time = 0;
+        let maxDepth = 7;
+        let animatedDepth = 0;
+        let depthIncreasing = true;
+
+        // Get color based on depth with animation
+        function getColor(depth, totalDepth) {
+            const hue = (depth / totalDepth * 360 + time * 20) % 360;
+            const saturation = 70 + Math.sin(time + depth) * 30;
+            const lightness = 50 + Math.cos(time * 0.5 + depth) * 20;
+            return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        }
+
+        // Draw a filled triangle
+        function drawTriangle(x1, y1, x2, y2, x3, y3, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.lineTo(x3, y3);
+            ctx.closePath();
+            ctx.fill();
+
+            // Add glow effect
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.5;
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+
+        // Recursive Sierpinski triangle function
+        function sierpinski(x1, y1, x2, y2, x3, y3, depth, currentDepth = 0) {
+            if (depth === 0) {
+                // Draw the base triangle
+                const color = getColor(currentDepth, maxDepth);
+                drawTriangle(x1, y1, x2, y2, x3, y3, color);
+                return;
+            }
+
+            // Calculate midpoints
+            const mx1 = (x1 + x2) / 2;
+            const my1 = (y1 + y2) / 2;
+            const mx2 = (x2 + x3) / 2;
+            const my2 = (y2 + y3) / 2;
+            const mx3 = (x3 + x1) / 2;
+            const my3 = (y3 + y1) / 2;
+
+            // Add slight animation offset based on depth
+            const offset = Math.sin(time * 2 + currentDepth * 0.5) * (depth * 2);
+
+            // Recursively draw three smaller triangles
+            sierpinski(x1, y1, mx1, my1, mx3, my3, depth - 1, currentDepth + 1);
+            sierpinski(mx1, my1, x2, y2, mx2, my2, depth - 1, currentDepth + 1);
+            sierpinski(mx3, my3, mx2, my2, x3, y3, depth - 1, currentDepth + 1);
+        }
+
+        // Calculate triangle vertices to fit the screen
+        function getTriangleVertices() {
+            const size = Math.min(canvas.width, canvas.height) * 0.8;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            // Equilateral triangle
+            const height = size * Math.sqrt(3) / 2;
+
+            return {
+                x1: centerX,
+                y1: centerY - height / 2,
+                x2: centerX - size / 2,
+                y2: centerY + height / 2,
+                x3: centerX + size / 2,
+                y3: centerY + height / 2
+            };
+        }
+
+        // Rotate point around center
+        function rotatePoint(x, y, cx, cy, angle) {
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            const dx = x - cx;
+            const dy = y - cy;
+
+            return {
+                x: cos * dx - sin * dy + cx,
+                y: sin * dx + cos * dy + cy
+            };
+        }
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Clear canvas with fade effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Get triangle vertices
+            const { x1, y1, x2, y2, x3, y3 } = getTriangleVertices();
+
+            // Add slow rotation
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const rotation = Math.sin(time * 0.5) * 0.1;
+
+            // Rotate vertices
+            const p1 = rotatePoint(x1, y1, centerX, centerY, rotation);
+            const p2 = rotatePoint(x2, y2, centerX, centerY, rotation);
+            const p3 = rotatePoint(x3, y3, centerX, centerY, rotation);
+
+            // Animate depth (grows and shrinks)
+            animatedDepth += depthIncreasing ? 0.02 : -0.02;
+
+            if (animatedDepth >= maxDepth) {
+                animatedDepth = maxDepth;
+                depthIncreasing = false;
+            } else if (animatedDepth <= 0) {
+                animatedDepth = 0;
+                depthIncreasing = true;
+            }
+
+            // Draw the Sierpinski triangle
+            sierpinski(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, Math.floor(animatedDepth));
+
+            // Update time
+            time += 0.01;
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

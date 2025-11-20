@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #027 - rotating-3d-cubes">
+    <meta name="created" content="2025-11-20">
+    <title>rotating-3d-cubes | Art Series #027</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #027
+         * Title: rotating-3d-cubes
+         * Author: @wisdomabioye
+         * Created: 2025-11-20
+         * Description: Multiple 3D cubes rotating in different directions with perspective projection
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        // 3D Point class
+        class Point3D {
+            constructor(x, y, z) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+
+            // Rotate around X axis
+            rotateX(angle) {
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                const y = this.y * cos - this.z * sin;
+                const z = this.y * sin + this.z * cos;
+                return new Point3D(this.x, y, z);
+            }
+
+            // Rotate around Y axis
+            rotateY(angle) {
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                const x = this.x * cos + this.z * sin;
+                const z = -this.x * sin + this.z * cos;
+                return new Point3D(x, this.y, z);
+            }
+
+            // Rotate around Z axis
+            rotateZ(angle) {
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                const x = this.x * cos - this.y * sin;
+                const y = this.x * sin + this.y * cos;
+                return new Point3D(x, y, this.z);
+            }
+
+            // Project to 2D with perspective
+            project(centerX, centerY, fov, viewDistance) {
+                const scale = fov / (viewDistance + this.z);
+                return {
+                    x: this.x * scale + centerX,
+                    y: this.y * scale + centerY,
+                    scale: scale
+                };
+            }
+        }
+
+        // Cube class
+        class Cube {
+            constructor(x, y, z, size, color, rotSpeed) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+                this.size = size;
+                this.color = color;
+                this.rotSpeed = rotSpeed;
+                this.angleX = Math.random() * Math.PI * 2;
+                this.angleY = Math.random() * Math.PI * 2;
+                this.angleZ = Math.random() * Math.PI * 2;
+
+                // Define cube vertices
+                const s = size / 2;
+                this.vertices = [
+                    new Point3D(-s, -s, -s),
+                    new Point3D(s, -s, -s),
+                    new Point3D(s, s, -s),
+                    new Point3D(-s, s, -s),
+                    new Point3D(-s, -s, s),
+                    new Point3D(s, -s, s),
+                    new Point3D(s, s, s),
+                    new Point3D(-s, s, s)
+                ];
+
+                // Define cube edges (vertex index pairs)
+                this.edges = [
+                    [0, 1], [1, 2], [2, 3], [3, 0], // Back face
+                    [4, 5], [5, 6], [6, 7], [7, 4], // Front face
+                    [0, 4], [1, 5], [2, 6], [3, 7]  // Connecting edges
+                ];
+            }
+
+            update() {
+                this.angleX += this.rotSpeed.x;
+                this.angleY += this.rotSpeed.y;
+                this.angleZ += this.rotSpeed.z;
+            }
+
+            draw(ctx, centerX, centerY, fov, viewDistance) {
+                // Transform vertices
+                const transformedVertices = this.vertices.map(v => {
+                    let point = new Point3D(v.x, v.y, v.z);
+                    point = point.rotateX(this.angleX);
+                    point = point.rotateY(this.angleY);
+                    point = point.rotateZ(this.angleZ);
+
+                    // Translate to cube position
+                    point.x += this.x;
+                    point.y += this.y;
+                    point.z += this.z;
+
+                    return point.project(centerX, centerY, fov, viewDistance);
+                });
+
+                // Draw edges
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+
+                this.edges.forEach(([i, j]) => {
+                    const v1 = transformedVertices[i];
+                    const v2 = transformedVertices[j];
+
+                    // Calculate opacity based on depth
+                    const avgScale = (v1.scale + v2.scale) / 2;
+                    const opacity = Math.min(1, Math.max(0.2, avgScale));
+
+                    ctx.globalAlpha = opacity;
+                    ctx.beginPath();
+                    ctx.moveTo(v1.x, v1.y);
+                    ctx.lineTo(v2.x, v2.y);
+                    ctx.stroke();
+                });
+
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // Color palette
+        const colors = [
+            '#FF006E', // Hot pink
+            '#8338EC', // Purple
+            '#3A86FF', // Blue
+            '#FB5607', // Orange
+            '#FFBE0B', // Yellow
+            '#06FFA5'  // Cyan
+        ];
+
+        // Create multiple cubes
+        const cubes = [];
+        const numCubes = 8;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const fov = 600;
+        const viewDistance = 400;
+
+        for (let i = 0; i < numCubes; i++) {
+            const angle = (i / numCubes) * Math.PI * 2;
+            const radius = 200;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+            const z = (i - numCubes / 2) * 50;
+
+            const size = 60 + Math.random() * 40;
+            const color = colors[i % colors.length];
+
+            const rotSpeed = {
+                x: (Math.random() - 0.5) * 0.02,
+                y: (Math.random() - 0.5) * 0.02,
+                z: (Math.random() - 0.5) * 0.02
+            };
+
+            cubes.push(new Cube(x, y, z, size, color, rotSpeed));
+        }
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Add trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw all cubes
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            cubes.forEach(cube => {
+                cube.update();
+                cube.draw(ctx, centerX, centerY, fov, viewDistance);
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

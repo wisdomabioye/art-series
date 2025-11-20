@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #038 - polygon-tunnels">
+    <meta name="created" content="2025-12-01">
+    <title>polygon-tunnels | Art Series #038</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #038
+         * Title: polygon-tunnels
+         * Author: @wisdomabioye
+         * Created: 2025-12-01
+         * Description: Animated 3D polygon tunnel with rotating shapes and infinite depth effect
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        let time = 0;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        // Polygon ring class
+        class PolygonRing {
+            constructor(sides, depth, rotation, size) {
+                this.sides = sides;
+                this.depth = depth;
+                this.rotation = rotation;
+                this.size = size;
+            }
+
+            // Get vertices of the polygon
+            getVertices() {
+                const vertices = [];
+                const scale = this.size / this.depth; // Perspective scaling
+
+                for (let i = 0; i < this.sides; i++) {
+                    const angle = (Math.PI * 2 / this.sides) * i + this.rotation;
+                    const x = centerX + Math.cos(angle) * scale;
+                    const y = centerY + Math.sin(angle) * scale;
+                    vertices.push({ x, y });
+                }
+
+                return vertices;
+            }
+
+            // Draw the polygon ring
+            draw(ctx) {
+                const vertices = this.getVertices();
+
+                // Calculate color based on depth
+                const depthRatio = Math.min(this.depth / 20, 1);
+                const hue = (this.depth * 20 + time * 2) % 360;
+                const saturation = 70 + depthRatio * 30;
+                const lightness = 60 - depthRatio * 40;
+
+                const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+
+                // Draw filled polygon
+                ctx.fillStyle = color;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = Math.max(1, 4 - this.depth / 5);
+                ctx.globalAlpha = Math.max(0.1, 1 - depthRatio);
+
+                ctx.beginPath();
+                ctx.moveTo(vertices[0].x, vertices[0].y);
+                for (let i = 1; i < vertices.length; i++) {
+                    ctx.lineTo(vertices[i].x, vertices[i].y);
+                }
+                ctx.closePath();
+
+                ctx.stroke();
+
+                // Fill with lower opacity for depth
+                ctx.globalAlpha = Math.max(0.05, (1 - depthRatio) * 0.3);
+                ctx.fill();
+
+                ctx.globalAlpha = 1;
+            }
+
+            // Update depth to create movement
+            update(speed) {
+                this.depth -= speed;
+
+                // Reset when too close
+                if (this.depth < 0.1) {
+                    this.depth = 20;
+                }
+            }
+        }
+
+        // Create multiple tunnels with different polygon types
+        const tunnels = [];
+
+        function createTunnels() {
+            tunnels.length = 0;
+
+            // Define different polygon types
+            const polygonTypes = [
+                { sides: 3, color: 'triangle' },   // Triangle
+                { sides: 4, color: 'square' },     // Square
+                { sides: 5, color: 'pentagon' },   // Pentagon
+                { sides: 6, color: 'hexagon' },    // Hexagon
+                { sides: 8, color: 'octagon' }     // Octagon
+            ];
+
+            // Create multiple rings for each polygon type
+            polygonTypes.forEach((type, typeIndex) => {
+                const tunnel = [];
+                const numRings = 30;
+                const maxSize = Math.min(canvas.width, canvas.height) * 0.8;
+
+                for (let i = 0; i < numRings; i++) {
+                    const depth = i * 0.7 + typeIndex * 0.1;
+                    const rotation = (i * 0.1) + (typeIndex * Math.PI / 5);
+                    const size = maxSize;
+
+                    tunnel.push(new PolygonRing(type.sides, depth, rotation, size));
+                }
+
+                tunnels.push(tunnel);
+            });
+        }
+
+        // Draw connecting lines between rings for tunnel effect
+        function drawConnections(ring1, ring2) {
+            if (!ring1 || !ring2) return;
+
+            const vertices1 = ring1.getVertices();
+            const vertices2 = ring2.getVertices();
+
+            const depthRatio = Math.min(ring1.depth / 20, 1);
+            const hue = (ring1.depth * 20 + time * 2) % 360;
+            const lightness = 60 - depthRatio * 40;
+
+            ctx.strokeStyle = `hsl(${hue}, 70%, ${lightness}%)`;
+            ctx.lineWidth = Math.max(0.5, 2 - ring1.depth / 10);
+            ctx.globalAlpha = Math.max(0.05, (1 - depthRatio) * 0.3);
+
+            // Draw lines connecting corresponding vertices
+            for (let i = 0; i < vertices1.length; i++) {
+                ctx.beginPath();
+                ctx.moveTo(vertices1[i].x, vertices1[i].y);
+                ctx.lineTo(vertices2[i].x, vertices2[i].y);
+                ctx.stroke();
+            }
+
+            ctx.globalAlpha = 1;
+        }
+
+        // Initialize
+        createTunnels();
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Clear canvas with trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Movement speed
+            const speed = 0.1;
+
+            // Draw each tunnel
+            tunnels.forEach(tunnel => {
+                // Sort rings by depth (furthest first for proper rendering)
+                tunnel.sort((a, b) => b.depth - a.depth);
+
+                // Draw connections between consecutive rings
+                for (let i = 0; i < tunnel.length - 1; i++) {
+                    drawConnections(tunnel[i], tunnel[i + 1]);
+                }
+
+                // Draw rings
+                tunnel.forEach(ring => {
+                    ring.draw(ctx);
+                    ring.update(speed);
+
+                    // Add rotation
+                    ring.rotation += 0.01;
+                });
+            });
+
+            // Update time
+            time += 1;
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            createTunnels(); // Recreate tunnels on resize
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #032 - spirograph-patterns">
+    <meta name="created" content="2025-11-25">
+    <title>spirograph-patterns | Art Series #032</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #032
+         * Title: spirograph-patterns
+         * Author: @wisdomabioye
+         * Created: 2025-11-25
+         * Description: Animated spirograph patterns with parametric equations and rainbow colors
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        // Spirograph class
+        class Spirograph {
+            constructor(centerX, centerY, R, r, p, color, speed = 1) {
+                this.centerX = centerX;
+                this.centerY = centerY;
+                this.R = R;  // Radius of fixed circle
+                this.r = r;  // Radius of rolling circle
+                this.p = p;  // Distance of pen point from center of rolling circle
+                this.color = color;
+                this.speed = speed;
+                this.angle = 0;
+                this.maxAngle = this.calculateMaxAngle();
+                this.points = [];
+            }
+
+            // Calculate the angle needed to complete the pattern
+            calculateMaxAngle() {
+                const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+                const g = gcd(Math.abs(this.R), Math.abs(this.r));
+                return (Math.PI * 2 * Math.abs(this.r)) / g;
+            }
+
+            // Hypotrochoid formula (inner rolling circle)
+            calculatePoint(t) {
+                const R = this.R;
+                const r = this.r;
+                const p = this.p;
+
+                const x = this.centerX + (R - r) * Math.cos(t) + p * Math.cos(((R - r) / r) * t);
+                const y = this.centerY + (R - r) * Math.sin(t) - p * Math.sin(((R - r) / r) * t);
+
+                return { x, y };
+            }
+
+            update() {
+                this.angle += 0.02 * this.speed;
+                if (this.angle > this.maxAngle * 2) {
+                    this.angle = 0;
+                    this.points = [];
+                }
+
+                const point = this.calculatePoint(this.angle);
+                this.points.push(point);
+
+                // Limit points array size
+                if (this.points.length > 5000) {
+                    this.points.shift();
+                }
+            }
+
+            draw(ctx) {
+                if (this.points.length < 2) return;
+
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                // Draw the curve
+                ctx.beginPath();
+                ctx.moveTo(this.points[0].x, this.points[0].y);
+
+                for (let i = 1; i < this.points.length; i++) {
+                    // Add color gradient over time
+                    const hue = (i / this.points.length * 360 + this.angle * 20) % 360;
+                    ctx.strokeStyle = `hsl(${hue}, 80%, 60%)`;
+
+                    ctx.lineTo(this.points[i].x, this.points[i].y);
+
+                    // Draw in segments for color variation
+                    if (i % 10 === 0) {
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(this.points[i].x, this.points[i].y);
+                    }
+                }
+                ctx.stroke();
+
+                // Draw the current drawing point with glow
+                const currentPoint = this.points[this.points.length - 1];
+                if (currentPoint) {
+                    const gradient = ctx.createRadialGradient(
+                        currentPoint.x, currentPoint.y, 0,
+                        currentPoint.x, currentPoint.y, 10
+                    );
+                    gradient.addColorStop(0, this.color);
+                    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(currentPoint.x, currentPoint.y, 10, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Draw center dot
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(currentPoint.x, currentPoint.y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // Animation variables
+        let time = 0;
+        const spirographs = [];
+
+        // Create multiple spirographs with different parameters
+        function initSpirographs() {
+            spirographs.length = 0;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            const configs = [
+                { R: 120, r: 60, p: 80, color: '#FF006E', speed: 1 },
+                { R: 150, r: 30, p: 100, color: '#8338EC', speed: 0.8 },
+                { R: 100, r: 40, p: 60, color: '#3A86FF', speed: 1.2 },
+                { R: 130, r: 50, p: 90, color: '#06FFA5', speed: 0.9 },
+            ];
+
+            configs.forEach(config => {
+                spirographs.push(new Spirograph(
+                    centerX,
+                    centerY,
+                    config.R,
+                    config.r,
+                    config.p,
+                    config.color,
+                    config.speed
+                ));
+            });
+        }
+
+        // Alternative: Epitrochoid (outer rolling circle)
+        class EpiSpirograph extends Spirograph {
+            calculatePoint(t) {
+                const R = this.R;
+                const r = this.r;
+                const p = this.p;
+
+                const x = this.centerX + (R + r) * Math.cos(t) - p * Math.cos(((R + r) / r) * t);
+                const y = this.centerY + (R + r) * Math.sin(t) - p * Math.sin(((R + r) / r) * t);
+
+                return { x, y };
+            }
+        }
+
+        // Initialize
+        initSpirographs();
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Clear canvas with very subtle trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.02)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw all spirographs
+            spirographs.forEach(spiro => {
+                spiro.update();
+                spiro.draw(ctx);
+            });
+
+            // Update time
+            time += 0.01;
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initSpirographs(); // Reinitialize spirographs on resize
+        });
+    </script>
+</body>
+</html>

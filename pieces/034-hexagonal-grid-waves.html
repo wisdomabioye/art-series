@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #034 - hexagonal-grid-waves">
+    <meta name="created" content="2025-11-27">
+    <title>hexagonal-grid-waves | Art Series #034</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #034
+         * Title: hexagonal-grid-waves
+         * Author: @wisdomabioye
+         * Created: 2025-11-27
+         * Description: Animated hexagonal grid with wave patterns, color gradients, and ripple effects
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        // Hexagon class
+        class Hexagon {
+            constructor(x, y, size, row, col) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.row = row;
+                this.col = col;
+                this.baseSize = size;
+            }
+
+            // Draw hexagon
+            draw(ctx, scale = 1, color = '#FFFFFF', filled = true) {
+                const size = this.baseSize * scale;
+
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI / 3) * i;
+                    const hx = this.x + size * Math.cos(angle);
+                    const hy = this.y + size * Math.sin(angle);
+
+                    if (i === 0) {
+                        ctx.moveTo(hx, hy);
+                    } else {
+                        ctx.lineTo(hx, hy);
+                    }
+                }
+                ctx.closePath();
+
+                if (filled) {
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                }
+
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // Get distance from a point
+            distanceFrom(x, y) {
+                return Math.sqrt((this.x - x) ** 2 + (this.y - y) ** 2);
+            }
+        }
+
+        // Animation variables
+        let time = 0;
+        const hexagons = [];
+        const hexSize = 30;
+
+        // Create hexagonal grid
+        function createHexGrid() {
+            hexagons.length = 0;
+
+            // Hexagon dimensions
+            const width = hexSize * 2;
+            const height = Math.sqrt(3) * hexSize;
+            const vertDist = height;
+            const horizDist = width * 0.75;
+
+            // Calculate grid bounds with padding
+            const padding = hexSize * 2;
+            const startX = -padding;
+            const startY = -padding;
+            const endX = canvas.width + padding;
+            const endY = canvas.height + padding;
+
+            let row = 0;
+            for (let y = startY; y < endY; y += vertDist) {
+                const offsetX = (row % 2) * (width * 0.75);
+                let col = 0;
+
+                for (let x = startX + offsetX; x < endX; x += horizDist) {
+                    hexagons.push(new Hexagon(x, y, hexSize, row, col));
+                    col++;
+                }
+                row++;
+            }
+        }
+
+        // Get color based on wave value
+        function getWaveColor(value) {
+            // Value ranges from 0 to 1
+            const hue = (value * 360 + time * 30) % 360;
+            const saturation = 70 + value * 30;
+            const lightness = 30 + value * 40;
+            return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        }
+
+        // Calculate wave patterns
+        function calculateWave(hex, time) {
+            // Multiple wave sources
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            // Distance from center
+            const dist = hex.distanceFrom(centerX, centerY);
+
+            // Circular wave from center
+            const wave1 = Math.sin(dist * 0.02 - time * 2) * 0.5 + 0.5;
+
+            // Horizontal wave
+            const wave2 = Math.sin(hex.x * 0.01 + time * 1.5) * 0.5 + 0.5;
+
+            // Vertical wave
+            const wave3 = Math.sin(hex.y * 0.01 + time * 1.2) * 0.5 + 0.5;
+
+            // Diagonal wave
+            const wave4 = Math.sin((hex.x + hex.y) * 0.008 - time) * 0.5 + 0.5;
+
+            // Combine waves
+            const combined = (wave1 + wave2 + wave3 + wave4) / 4;
+
+            return combined;
+        }
+
+        // Initialize grid
+        createHexGrid();
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw all hexagons with wave effects
+            hexagons.forEach(hex => {
+                // Calculate wave value for this hexagon
+                const waveValue = calculateWave(hex, time);
+
+                // Scale hexagon based on wave
+                const scale = 0.7 + waveValue * 0.5;
+
+                // Get color based on wave
+                const color = getWaveColor(waveValue);
+
+                // Set opacity based on wave
+                ctx.globalAlpha = 0.4 + waveValue * 0.6;
+
+                // Draw the hexagon
+                hex.draw(ctx, scale, color, true);
+
+                // Add glow effect for high values
+                if (waveValue > 0.7) {
+                    ctx.globalAlpha = (waveValue - 0.7) * 0.5;
+                    hex.draw(ctx, scale * 1.2, color, false);
+                }
+            });
+
+            ctx.globalAlpha = 1;
+
+            // Update time
+            time += 0.02;
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            createHexGrid(); // Recreate grid on resize
+        });
+    </script>
+</body>
+</html>
