@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #010 - pixel-rain">
+    <meta name="created" content="2025-11-03">
+    <title>pixel-rain | Art Series #010</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #010
+         * Title: pixel-rain
+         * Author: @wisdomabioye
+         * Created: 2025-11-03
+         * Description: Matrix-style digital rain with falling green characters and glow effects
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        const fontSize = 16;
+        const columns = Math.floor(canvas.width / fontSize);
+
+        // Character set - mix of katakana, numbers, and symbols
+        const characters = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        // Rain drop class
+        class RainDrop {
+            constructor(x) {
+                this.x = x;
+                this.y = Math.random() * -100 - canvas.height;
+                this.speed = Math.random() * 3 + 2;
+                this.length = Math.floor(Math.random() * 15) + 10;
+                this.characters = [];
+
+                // Generate random characters for this drop
+                for (let i = 0; i < this.length; i++) {
+                    this.characters.push(this.randomChar());
+                }
+            }
+
+            randomChar() {
+                return characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+
+            update() {
+                this.y += this.speed;
+
+                // Randomly change characters
+                if (Math.random() > 0.95) {
+                    const index = Math.floor(Math.random() * this.characters.length);
+                    this.characters[index] = this.randomChar();
+                }
+
+                // Reset when off screen
+                if (this.y - this.length * fontSize > canvas.height) {
+                    this.y = Math.random() * -100 - 100;
+                    this.speed = Math.random() * 3 + 2;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.font = `${fontSize}px monospace`;
+                ctx.textAlign = 'center';
+
+                // Draw each character in the drop
+                for (let i = 0; i < this.characters.length; i++) {
+                    const charY = this.y - i * fontSize;
+
+                    // Only draw if on screen
+                    if (charY > 0 && charY < canvas.height) {
+                        // Calculate brightness based on position in drop
+                        const brightness = i === 0 ? 1 : 1 - (i / this.length);
+
+                        // Leading character is brightest (white)
+                        if (i === 0) {
+                            ctx.fillStyle = '#ffffff';
+                            ctx.shadowBlur = 10;
+                            ctx.shadowColor = '#00ff00';
+                        } else if (i < 3) {
+                            // Next few are bright green
+                            ctx.fillStyle = `rgba(200, 255, 200, ${brightness})`;
+                            ctx.shadowBlur = 5;
+                            ctx.shadowColor = '#00ff00';
+                        } else {
+                            // Rest fade to darker green
+                            const green = Math.floor(100 + brightness * 155);
+                            ctx.fillStyle = `rgba(0, ${green}, 0, ${brightness})`;
+                            ctx.shadowBlur = 0;
+                        }
+
+                        ctx.fillText(this.characters[i], this.x, charY);
+                    }
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // Create rain drops for each column
+        const rainDrops = [];
+        for (let i = 0; i < columns; i++) {
+            // Random delay before each column starts
+            if (Math.random() > 0.3) {
+                rainDrops.push(new RainDrop(i * fontSize + fontSize / 2));
+            }
+        }
+
+        // Add more drops periodically
+        let frameCount = 0;
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Create fade trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            frameCount++;
+
+            // Randomly add new drops to empty columns
+            if (frameCount % 30 === 0 && rainDrops.length < columns) {
+                const emptyColumns = [];
+                for (let i = 0; i < columns; i++) {
+                    const x = i * fontSize + fontSize / 2;
+                    const hasDropInColumn = rainDrops.some(drop => Math.abs(drop.x - x) < fontSize / 2);
+                    if (!hasDropInColumn) {
+                        emptyColumns.push(x);
+                    }
+                }
+
+                if (emptyColumns.length > 0 && Math.random() > 0.7) {
+                    const randomX = emptyColumns[Math.floor(Math.random() * emptyColumns.length)];
+                    rainDrops.push(new RainDrop(randomX));
+                }
+            }
+
+            // Update and draw all drops
+            for (let drop of rainDrops) {
+                drop.update();
+                drop.draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

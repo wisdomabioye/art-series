@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #004 - flocking-birds">
+    <meta name="created" content="2025-10-28">
+    <title>flocking-birds | Art Series #004</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #004
+         * Title: flocking-birds
+         * Author: @wisdomabioye
+         * Created: 2025-10-28
+         * Description: Boids algorithm simulation with separation, alignment, and cohesion rules
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        class Boid {
+            constructor(x, y) {
+                this.position = { x: x || Math.random() * canvas.width, y: y || Math.random() * canvas.height };
+                this.velocity = {
+                    x: (Math.random() - 0.5) * 2,
+                    y: (Math.random() - 0.5) * 2
+                };
+                this.acceleration = { x: 0, y: 0 };
+                this.maxSpeed = 3;
+                this.maxForce = 0.05;
+                this.perceptionRadius = 50;
+            }
+
+            edges() {
+                // Wrap around edges
+                if (this.position.x > canvas.width) this.position.x = 0;
+                if (this.position.x < 0) this.position.x = canvas.width;
+                if (this.position.y > canvas.height) this.position.y = 0;
+                if (this.position.y < 0) this.position.y = canvas.height;
+            }
+
+            align(boids) {
+                let steering = { x: 0, y: 0 };
+                let total = 0;
+
+                for (let other of boids) {
+                    let d = this.distance(this.position, other.position);
+                    if (other !== this && d < this.perceptionRadius) {
+                        steering.x += other.velocity.x;
+                        steering.y += other.velocity.y;
+                        total++;
+                    }
+                }
+
+                if (total > 0) {
+                    steering.x /= total;
+                    steering.y /= total;
+                    steering = this.setMag(steering, this.maxSpeed);
+                    steering.x -= this.velocity.x;
+                    steering.y -= this.velocity.y;
+                    steering = this.limit(steering, this.maxForce);
+                }
+
+                return steering;
+            }
+
+            cohesion(boids) {
+                let steering = { x: 0, y: 0 };
+                let total = 0;
+
+                for (let other of boids) {
+                    let d = this.distance(this.position, other.position);
+                    if (other !== this && d < this.perceptionRadius) {
+                        steering.x += other.position.x;
+                        steering.y += other.position.y;
+                        total++;
+                    }
+                }
+
+                if (total > 0) {
+                    steering.x /= total;
+                    steering.y /= total;
+                    steering.x -= this.position.x;
+                    steering.y -= this.position.y;
+                    steering = this.setMag(steering, this.maxSpeed);
+                    steering.x -= this.velocity.x;
+                    steering.y -= this.velocity.y;
+                    steering = this.limit(steering, this.maxForce);
+                }
+
+                return steering;
+            }
+
+            separation(boids) {
+                let steering = { x: 0, y: 0 };
+                let total = 0;
+
+                for (let other of boids) {
+                    let d = this.distance(this.position, other.position);
+                    if (other !== this && d < this.perceptionRadius) {
+                        let diff = {
+                            x: this.position.x - other.position.x,
+                            y: this.position.y - other.position.y
+                        };
+                        if (d > 0) {
+                            diff.x /= d;
+                            diff.y /= d;
+                        }
+                        steering.x += diff.x;
+                        steering.y += diff.y;
+                        total++;
+                    }
+                }
+
+                if (total > 0) {
+                    steering.x /= total;
+                    steering.y /= total;
+                    steering = this.setMag(steering, this.maxSpeed);
+                    steering.x -= this.velocity.x;
+                    steering.y -= this.velocity.y;
+                    steering = this.limit(steering, this.maxForce);
+                }
+
+                return steering;
+            }
+
+            flock(boids) {
+                let alignment = this.align(boids);
+                let cohesion = this.cohesion(boids);
+                let separation = this.separation(boids);
+
+                // Weight the forces
+                alignment.x *= 1.0;
+                alignment.y *= 1.0;
+                cohesion.x *= 1.0;
+                cohesion.y *= 1.0;
+                separation.x *= 1.5;
+                separation.y *= 1.5;
+
+                this.acceleration.x += alignment.x;
+                this.acceleration.y += alignment.y;
+                this.acceleration.x += cohesion.x;
+                this.acceleration.y += cohesion.y;
+                this.acceleration.x += separation.x;
+                this.acceleration.y += separation.y;
+            }
+
+            update() {
+                this.velocity.x += this.acceleration.x;
+                this.velocity.y += this.acceleration.y;
+                this.velocity = this.limit(this.velocity, this.maxSpeed);
+
+                this.position.x += this.velocity.x;
+                this.position.y += this.velocity.y;
+
+                this.acceleration.x = 0;
+                this.acceleration.y = 0;
+            }
+
+            draw() {
+                // Calculate angle from velocity
+                let angle = Math.atan2(this.velocity.y, this.velocity.x);
+
+                ctx.save();
+                ctx.translate(this.position.x, this.position.y);
+                ctx.rotate(angle);
+
+                // Draw bird shape
+                ctx.fillStyle = 'rgba(50, 50, 50, 0.8)';
+                ctx.strokeStyle = 'rgba(30, 30, 30, 0.9)';
+                ctx.lineWidth = 1;
+
+                ctx.beginPath();
+                ctx.moveTo(8, 0);
+                ctx.lineTo(-4, -4);
+                ctx.lineTo(-4, 4);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.restore();
+            }
+
+            // Helper methods
+            distance(v1, v2) {
+                let dx = v1.x - v2.x;
+                let dy = v1.y - v2.y;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            setMag(v, mag) {
+                let d = Math.sqrt(v.x * v.x + v.y * v.y);
+                if (d > 0) {
+                    return { x: (v.x / d) * mag, y: (v.y / d) * mag };
+                }
+                return { x: 0, y: 0 };
+            }
+
+            limit(v, max) {
+                let d = Math.sqrt(v.x * v.x + v.y * v.y);
+                if (d > max) {
+                    return { x: (v.x / d) * max, y: (v.y / d) * max };
+                }
+                return v;
+            }
+        }
+
+        // Create flock
+        const flock = [];
+        const numBoids = 100;
+
+        for (let i = 0; i < numBoids; i++) {
+            flock.push(new Boid());
+        }
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Clear canvas with sky background
+            ctx.fillStyle = 'rgba(135, 206, 235, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw all boids
+            for (let boid of flock) {
+                boid.edges();
+                boid.flock(flock);
+                boid.update();
+                boid.draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

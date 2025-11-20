@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #007 - dna-helix-particles">
+    <meta name="created" content="2025-10-31">
+    <title>dna-helix-particles | Art Series #007</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #0a0a1a 0%, #000000 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #007
+         * Title: dna-helix-particles
+         * Author: @wisdomabioye
+         * Created: 2025-10-31
+         * Description: Rotating double helix DNA strand with particles and connecting base pairs
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        // DNA helix parameters
+        const helixRadius = 100;
+        const helixHeight = 600;
+        const numPoints = 100;
+        const rotationSpeed = 0.005;
+        let angle = 0;
+
+        // Particle on DNA strand
+        class DNAParticle {
+            constructor(index, strand) {
+                this.index = index;
+                this.strand = strand; // 0 or 1 for the two strands
+                this.baseColor = strand === 0 ?
+                    { r: 100, g: 200, b: 255 } : // Cyan for strand 1
+                    { r: 255, g: 100, b: 150 };  // Pink for strand 2
+            }
+
+            getPosition(rotation) {
+                // Calculate position along helix
+                const t = this.index / numPoints;
+                const y = centerY - helixHeight / 2 + t * helixHeight;
+
+                // Helix angle - offset by 180 degrees for second strand
+                const helixAngle = t * Math.PI * 4 + rotation + (this.strand * Math.PI);
+
+                const x = centerX + Math.cos(helixAngle) * helixRadius;
+                const z = Math.sin(helixAngle) * helixRadius;
+
+                return { x, y, z, helixAngle };
+            }
+
+            draw(rotation) {
+                const pos = this.getPosition(rotation);
+
+                // Calculate size based on depth (z-position)
+                const scale = (pos.z + helixRadius) / (helixRadius * 2);
+                const size = 3 + scale * 3;
+                const alpha = 0.5 + scale * 0.5;
+
+                ctx.save();
+                ctx.globalAlpha = alpha;
+
+                // Draw particle with glow
+                const gradient = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, size * 2);
+                gradient.addColorStop(0, `rgba(${this.baseColor.r}, ${this.baseColor.g}, ${this.baseColor.b}, 1)`);
+                gradient.addColorStop(0.5, `rgba(${this.baseColor.r}, ${this.baseColor.g}, ${this.baseColor.b}, 0.5)`);
+                gradient.addColorStop(1, `rgba(${this.baseColor.r}, ${this.baseColor.g}, ${this.baseColor.b}, 0)`);
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, size * 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw core particle
+                ctx.fillStyle = `rgb(${this.baseColor.r}, ${this.baseColor.g}, ${this.baseColor.b})`;
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, size, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        // Create DNA strands
+        const strand1 = [];
+        const strand2 = [];
+
+        for (let i = 0; i < numPoints; i++) {
+            strand1.push(new DNAParticle(i, 0));
+            strand2.push(new DNAParticle(i, 1));
+        }
+
+        // Draw connecting base pairs
+        function drawBasePairs(rotation) {
+            // Draw every 5th connection to avoid clutter
+            for (let i = 0; i < numPoints; i += 5) {
+                const pos1 = strand1[i].getPosition(rotation);
+                const pos2 = strand2[i].getPosition(rotation);
+
+                // Only draw if both are in front (positive z)
+                if (pos1.z > -50 && pos2.z > -50) {
+                    const avgZ = (pos1.z + pos2.z) / 2;
+                    const scale = (avgZ + helixRadius) / (helixRadius * 2);
+                    const alpha = 0.3 + scale * 0.4;
+
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.strokeStyle = '#88ffaa';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(pos1.x, pos1.y);
+                    ctx.lineTo(pos2.x, pos2.y);
+                    ctx.stroke();
+
+                    // Draw small circles at connection points
+                    ctx.fillStyle = '#88ffaa';
+                    ctx.beginPath();
+                    ctx.arc((pos1.x + pos2.x) / 2, (pos1.y + pos2.y) / 2, 2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.restore();
+                }
+            }
+        }
+
+        // Draw connecting lines between particles on same strand
+        function drawStrandConnections(strand, rotation, color) {
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+
+            for (let i = 0; i < strand.length - 1; i++) {
+                const pos1 = strand[i].getPosition(rotation);
+                const pos2 = strand[i + 1].getPosition(rotation);
+
+                const avgZ = (pos1.z + pos2.z) / 2;
+                const scale = (avgZ + helixRadius) / (helixRadius * 2);
+                const alpha = 0.3 + scale * 0.4;
+
+                ctx.globalAlpha = alpha;
+                ctx.beginPath();
+                ctx.moveTo(pos1.x, pos1.y);
+                ctx.lineTo(pos2.x, pos2.y);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = 'rgba(10, 10, 26, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update rotation
+            angle += rotationSpeed;
+
+            // Sort particles by z-depth for proper rendering
+            const allParticles = [];
+
+            // Collect all particles with their positions
+            for (let particle of strand1) {
+                const pos = particle.getPosition(angle);
+                allParticles.push({ particle, pos, strand: 1 });
+            }
+            for (let particle of strand2) {
+                const pos = particle.getPosition(angle);
+                allParticles.push({ particle, pos, strand: 2 });
+            }
+
+            // Sort by z-depth (back to front)
+            allParticles.sort((a, b) => a.pos.z - b.pos.z);
+
+            // Draw strand connections first (background)
+            drawStrandConnections(strand1, angle, 'rgba(100, 200, 255, 0.3)');
+            drawStrandConnections(strand2, angle, 'rgba(255, 100, 150, 0.3)');
+
+            // Draw base pairs
+            drawBasePairs(angle);
+
+            // Draw particles in depth order
+            for (let item of allParticles) {
+                item.particle.draw(angle);
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

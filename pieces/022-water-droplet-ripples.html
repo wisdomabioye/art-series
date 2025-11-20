@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="ripples">
+    <meta name="description" content="Art Series #022 - water-droplet">
+    <meta name="created" content="2025-11-15">
+    <title>water-droplet | Art Series #022</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #022
+         * Title: water-droplet
+         * Author: @wisdomabioye
+         * Created: 2025-11-15
+         * Description: Water droplets falling with splash impact, ripple waves, and particle effects
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        const droplets = [];
+        const ripples = [];
+        const splashParticles = [];
+        const waterLevel = canvas.height * 0.65;
+        const surfacePoints = [];
+        const numSurfacePoints = 150;
+        const surfaceWaves = [];
+        const clouds = [];
+
+        class Droplet {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = -20;
+                this.radius = 4 + Math.random() * 6;
+                this.vy = 0;
+                this.gravity = 0.3;
+                this.alive = true;
+            }
+
+            update() {
+                this.vy += this.gravity;
+                this.y += this.vy;
+
+                // Check if hit water
+                if (this.y + this.radius >= waterLevel) {
+                    this.createSplash();
+                    this.alive = false;
+                }
+            }
+
+            draw() {
+                ctx.save();
+
+                // Droplet with gradient
+                const gradient = ctx.createRadialGradient(
+                    this.x - this.radius * 0.3,
+                    this.y - this.radius * 0.3,
+                    0,
+                    this.x,
+                    this.y,
+                    this.radius
+                );
+                gradient.addColorStop(0, 'rgba(200, 230, 255, 0.9)');
+                gradient.addColorStop(0.5, 'rgba(100, 180, 230, 0.7)');
+                gradient.addColorStop(1, 'rgba(50, 130, 200, 0.5)');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Highlight
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.beginPath();
+                ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            createSplash() {
+                // Create ripple
+                ripples.push(new Ripple(this.x, waterLevel, this.radius * 8));
+
+                // Create surface wave disturbance
+                surfaceWaves.push(new SurfaceWave(this.x, this.radius * 15, this.vy * 2));
+
+                // Create splash particles
+                const numParticles = Math.floor(this.radius * 3);
+                for (let i = 0; i < numParticles; i++) {
+                    const angle = (Math.PI / 2) + (Math.random() - 0.5) * Math.PI * 0.8;
+                    const speed = 3 + Math.random() * 4;
+                    splashParticles.push(new SplashParticle(this.x, waterLevel, angle, speed));
+                }
+            }
+        }
+
+        class Ripple {
+            constructor(x, y, maxRadius) {
+                this.x = x;
+                this.y = y;
+                this.radius = 0;
+                this.maxRadius = maxRadius;
+                this.speed = 3;
+                this.opacity = 1;
+                this.lineWidth = 2;
+            }
+
+            update() {
+                this.radius += this.speed;
+                this.opacity = 1 - (this.radius / this.maxRadius);
+                this.speed *= 0.98;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+
+                // Outer glow
+                ctx.strokeStyle = 'rgba(100, 180, 230, 0.5)';
+                ctx.lineWidth = this.lineWidth + 3;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Main ring
+                ctx.strokeStyle = 'rgba(150, 200, 240, 0.8)';
+                ctx.lineWidth = this.lineWidth;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.restore();
+            }
+
+            isDead() {
+                return this.radius >= this.maxRadius;
+            }
+        }
+
+        class SplashParticle {
+            constructor(x, y, angle, speed) {
+                this.x = x;
+                this.y = y;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.size = 2 + Math.random() * 3;
+                this.life = 1;
+                this.decay = 0.97;
+                this.gravity = 0.2;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.life *= this.decay;
+                this.vx *= 0.98;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+
+                // Particle with gradient
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+                gradient.addColorStop(0, 'rgba(200, 230, 255, 0.9)');
+                gradient.addColorStop(1, 'rgba(100, 180, 230, 0.4)');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            isDead() {
+                return this.life < 0.01 || this.y > waterLevel + 50;
+            }
+        }
+
+        // Surface wave disturbance
+        class SurfaceWave {
+            constructor(x, width, amplitude) {
+                this.centerX = x;
+                this.width = width;
+                this.amplitude = amplitude;
+                this.age = 0;
+                this.maxAge = 60;
+                this.speed = 3;
+            }
+
+            update() {
+                this.age++;
+                this.width += this.speed;
+                this.amplitude *= 0.95;
+            }
+
+            getDisplacement(x) {
+                const distance = Math.abs(x - this.centerX);
+                if (distance > this.width) return 0;
+
+                const normalizedDist = distance / this.width;
+                const strength = 1 - normalizedDist;
+                const wave = Math.sin(normalizedDist * Math.PI);
+                const ageDecay = 1 - (this.age / this.maxAge);
+
+                return this.amplitude * wave * strength * ageDecay;
+            }
+
+            isDead() {
+                return this.age >= this.maxAge;
+            }
+        }
+
+        // Surface point for dynamic water surface
+        class SurfacePoint {
+            constructor(index) {
+                this.index = index;
+                this.x = (index / (numSurfacePoints - 1)) * canvas.width;
+                this.baseY = waterLevel;
+                this.y = this.baseY;
+                this.vy = 0;
+                this.stiffness = 0.015;
+                this.damping = 0.98;
+            }
+
+            update() {
+                // Calculate total displacement from all waves
+                let totalDisplacement = 0;
+                for (let wave of surfaceWaves) {
+                    totalDisplacement += wave.getDisplacement(this.x);
+                }
+
+                // Spring physics toward base position + wave displacement
+                const targetY = this.baseY + totalDisplacement;
+                const dy = targetY - this.y;
+                this.vy += dy * this.stiffness;
+                this.vy *= this.damping;
+                this.y += this.vy;
+            }
+        }
+
+        // Cloud class
+        class Cloud {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * waterLevel * 0.5;
+                this.width = 100 + Math.random() * 150;
+                this.height = 40 + Math.random() * 60;
+                this.vx = 0.3 + Math.random() * 0.5;
+                this.opacity = 0.3 + Math.random() * 0.4;
+                this.puffs = [];
+
+                // Create cloud puffs (multiple circles)
+                const numPuffs = 5 + Math.floor(Math.random() * 4);
+                for (let i = 0; i < numPuffs; i++) {
+                    this.puffs.push({
+                        x: (i / numPuffs) * this.width + (Math.random() - 0.5) * 30,
+                        y: (Math.random() - 0.5) * this.height * 0.5,
+                        radius: 25 + Math.random() * 35
+                    });
+                }
+            }
+
+            update() {
+                this.x += this.vx;
+
+                // Wrap around
+                if (this.x - this.width / 2 > canvas.width) {
+                    this.x = -this.width / 2;
+                    this.y = Math.random() * waterLevel * 0.5;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+
+                // Draw each puff
+                for (let puff of this.puffs) {
+                    const gradient = ctx.createRadialGradient(
+                        this.x + puff.x,
+                        this.y + puff.y,
+                        0,
+                        this.x + puff.x,
+                        this.y + puff.y,
+                        puff.radius
+                    );
+                    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+                    gradient.addColorStop(0.5, 'rgba(240, 245, 250, 0.6)');
+                    gradient.addColorStop(1, 'rgba(230, 240, 250, 0)');
+
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(this.x + puff.x, this.y + puff.y, puff.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // Initialize clouds
+        for (let i = 0; i < 8; i++) {
+            clouds.push(new Cloud());
+        }
+
+        // Initialize surface points
+        for (let i = 0; i < numSurfacePoints; i++) {
+            surfacePoints.push(new SurfacePoint(i));
+        }
+
+        // Auto-generate droplets
+        let dropletTimer = 0;
+        const dropletInterval = 40;
+
+        function createDroplet() {
+            droplets.push(new Droplet());
+        }
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Sky gradient background
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGradient.addColorStop(0, '#87CEEB');
+            skyGradient.addColorStop(0.5, '#B0E2FF');
+            skyGradient.addColorStop(1, '#E0F6FF');
+
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw clouds
+            for (let cloud of clouds) {
+                cloud.update();
+                cloud.draw();
+            }
+
+            // Update surface waves
+            for (let i = surfaceWaves.length - 1; i >= 0; i--) {
+                surfaceWaves[i].update();
+                if (surfaceWaves[i].isDead()) {
+                    surfaceWaves.splice(i, 1);
+                }
+            }
+
+            // Update surface points
+            for (let point of surfacePoints) {
+                point.update();
+            }
+
+            // Draw water body with dynamic surface
+            ctx.save();
+
+            // Water body below surface
+            const waterGradient = ctx.createLinearGradient(0, waterLevel, 0, canvas.height);
+            waterGradient.addColorStop(0, 'rgba(70, 130, 180, 0.6)');
+            waterGradient.addColorStop(0.5, 'rgba(50, 110, 160, 0.7)');
+            waterGradient.addColorStop(1, 'rgba(30, 90, 140, 0.8)');
+
+            // Draw water using surface points
+            ctx.fillStyle = waterGradient;
+            ctx.beginPath();
+            ctx.moveTo(0, surfacePoints[0].y);
+
+            // Draw curved surface
+            for (let i = 0; i < surfacePoints.length - 1; i++) {
+                const curr = surfacePoints[i];
+                const next = surfacePoints[i + 1];
+                const midX = (curr.x + next.x) / 2;
+                const midY = (curr.y + next.y) / 2;
+                ctx.quadraticCurveTo(curr.x, curr.y, midX, midY);
+            }
+
+            // Complete the water body
+            const lastPoint = surfacePoints[surfacePoints.length - 1];
+            ctx.lineTo(lastPoint.x, lastPoint.y);
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.lineTo(0, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+
+            // Draw dynamic surface line
+            ctx.strokeStyle = 'rgba(150, 200, 240, 0.6)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, surfacePoints[0].y);
+
+            for (let i = 0; i < surfacePoints.length - 1; i++) {
+                const curr = surfacePoints[i];
+                const next = surfacePoints[i + 1];
+                const midX = (curr.x + next.x) / 2;
+                const midY = (curr.y + next.y) / 2;
+                ctx.quadraticCurveTo(curr.x, curr.y, midX, midY);
+            }
+
+            ctx.lineTo(lastPoint.x, lastPoint.y);
+            ctx.stroke();
+
+            // Surface highlight
+            ctx.strokeStyle = 'rgba(200, 230, 255, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(0, surfacePoints[0].y - 2);
+
+            for (let i = 0; i < surfacePoints.length - 1; i++) {
+                const curr = surfacePoints[i];
+                const next = surfacePoints[i + 1];
+                const midX = (curr.x + next.x) / 2;
+                const midY = (curr.y + next.y) / 2 - 2;
+                ctx.quadraticCurveTo(curr.x, curr.y - 2, midX, midY);
+            }
+
+            ctx.lineTo(lastPoint.x, lastPoint.y - 2);
+            ctx.stroke();
+
+            ctx.restore();
+
+            // Auto-generate droplets
+            dropletTimer++;
+            if (dropletTimer >= dropletInterval) {
+                createDroplet();
+                dropletTimer = 0;
+            }
+
+            // Update and draw droplets
+            for (let i = droplets.length - 1; i >= 0; i--) {
+                droplets[i].update();
+                droplets[i].draw();
+
+                if (!droplets[i].alive) {
+                    droplets.splice(i, 1);
+                }
+            }
+
+            // Update and draw ripples
+            for (let i = ripples.length - 1; i >= 0; i--) {
+                ripples[i].update();
+                ripples[i].draw();
+
+                if (ripples[i].isDead()) {
+                    ripples.splice(i, 1);
+                }
+            }
+
+            // Update and draw splash particles
+            for (let i = splashParticles.length - 1; i >= 0; i--) {
+                splashParticles[i].update();
+                splashParticles[i].draw();
+
+                if (splashParticles[i].isDead()) {
+                    splashParticles.splice(i, 1);
+                }
+            }
+
+            // Add subtle underwater shimmer
+            for (let i = 0; i < 20; i++) {
+                const x = Math.random() * canvas.width;
+                const y = waterLevel + Math.random() * (canvas.height - waterLevel);
+                const size = Math.random() * 2;
+                const opacity = Math.random() * 0.3;
+
+                ctx.save();
+                ctx.globalAlpha = opacity;
+                ctx.fillStyle = 'rgba(200, 230, 255, 0.6)';
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

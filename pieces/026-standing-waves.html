@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #026 - standing-waves">
+    <meta name="created" content="2025-11-19">
+    <title>standing-waves | Art Series #026</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #026
+         * Title: standing-waves
+         * Author: @wisdomabioye
+         * Created: 2025-11-19
+         * Description: Standing waves visualization showing nodes (stationary points) and antinodes (maximum oscillation points) with multiple harmonics
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        // Standing wave configuration
+        const numWaves = 8;
+        const waveSpacing = canvas.height / (numWaves + 1);
+        const numNodes = 6; // Number of nodes per wave
+        let time = 0;
+
+        class StandingWave {
+            constructor(y, frequency, amplitude, nodeCount) {
+                this.y = y;
+                this.frequency = frequency;
+                this.amplitude = amplitude;
+                this.nodeCount = nodeCount;
+                this.wavelength = canvas.width / nodeCount;
+            }
+
+            draw(t) {
+                ctx.beginPath();
+                ctx.strokeStyle = `hsl(${(this.y / canvas.height) * 280 + 160}, 80%, 60%)`;
+                ctx.lineWidth = 2;
+
+                // Draw the standing wave
+                for (let x = 0; x < canvas.width; x += 2) {
+                    // Standing wave equation: A(x) * sin(ωt)
+                    // A(x) = 2A * sin(kx) where k = 2π/λ
+                    const spatialComponent = Math.sin((x / this.wavelength) * Math.PI * 2);
+                    const temporalComponent = Math.sin(t * this.frequency);
+                    const y = this.y + (spatialComponent * temporalComponent * this.amplitude);
+
+                    if (x === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+
+                // Draw nodes (points that don't move)
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                for (let i = 0; i <= this.nodeCount; i++) {
+                    const nodeX = (i / this.nodeCount) * canvas.width;
+                    ctx.beginPath();
+                    ctx.arc(nodeX, this.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Draw antinodes (points of maximum displacement) with pulse effect
+                ctx.fillStyle = `hsla(${(this.y / canvas.height) * 280 + 160}, 100%, 70%, 0.6)`;
+                for (let i = 0; i < this.nodeCount; i++) {
+                    const antinodeX = ((i + 0.5) / this.nodeCount) * canvas.width;
+                    const pulseSize = Math.abs(Math.sin(t * this.frequency)) * 6 + 3;
+                    ctx.beginPath();
+                    ctx.arc(antinodeX, this.y, pulseSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // Create multiple standing waves with different properties
+        const waves = [];
+        for (let i = 0; i < numWaves; i++) {
+            const y = waveSpacing * (i + 1);
+            const frequency = 0.02 + (i * 0.005); // Different frequencies for each wave
+            const amplitude = 40 + (i * 3);
+            const nodeCount = 3 + i; // Increasing number of nodes
+            waves.push(new StandingWave(y, frequency, amplitude, nodeCount));
+        }
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Clear canvas with trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            time += 0.05;
+
+            // Draw all standing waves
+            waves.forEach(wave => wave.draw(time));
+
+            // Draw title text
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.font = '16px monospace';
+            ctx.fillText('Standing Waves - Nodes & Antinodes', 20, 30);
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

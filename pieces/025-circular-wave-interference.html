@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #025 - circular-wave">
+    <meta name="created" content="2025-11-18">
+    <title>circular-wave | Art Series #025</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #025
+         * Title: circular-wave
+         * Author: @wisdomabioye
+         * Created: 2025-11-18
+         * Description: Circular wave interference pattern with multiple wave sources creating beautiful constructive and destructive interference
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        // Wave sources configuration
+        const waveSources = [
+            { x: 0.3, y: 0.5 },
+            { x: 0.7, y: 0.5 },
+            { x: 0.5, y: 0.3 },
+            { x: 0.5, y: 0.7 }
+        ];
+
+        let time = 0;
+        const waveSpeed = 0.05;
+        const waveFrequency = 0.02;
+        const amplitude = 30;
+        const gridSize = 8;
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            time += waveSpeed;
+
+            // Draw interference pattern using grid
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                for (let y = 0; y < canvas.height; y += gridSize) {
+                    let totalWave = 0;
+
+                    // Calculate wave contribution from each source
+                    waveSources.forEach(source => {
+                        const sourceX = source.x * canvas.width;
+                        const sourceY = source.y * canvas.height;
+
+                        // Distance from current point to wave source
+                        const dx = x - sourceX;
+                        const dy = y - sourceY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        // Calculate wave value
+                        const wave = Math.sin(distance * waveFrequency - time);
+                        totalWave += wave;
+                    });
+
+                    // Normalize and map to color
+                    const normalizedWave = totalWave / waveSources.length;
+                    const brightness = Math.floor(((normalizedWave + 1) / 2) * 255);
+
+                    // Create color gradient based on wave intensity
+                    const hue = (brightness / 255) * 60 + 180; // Blue to cyan range
+                    const saturation = 80;
+                    const lightness = brightness / 255 * 70;
+
+                    ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                    ctx.fillRect(x, y, gridSize, gridSize);
+                }
+            }
+
+            // Draw wave source markers
+            waveSources.forEach(source => {
+                const sourceX = source.x * canvas.width;
+                const sourceY = source.y * canvas.height;
+
+                ctx.beginPath();
+                ctx.arc(sourceX, sourceY, 8, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.fill();
+
+                // Draw expanding circle at each source
+                const pulseRadius = (time % (Math.PI * 2 / waveSpeed)) * 20;
+                ctx.beginPath();
+                ctx.arc(sourceX, sourceY, pulseRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(255, 255, 255, ${1 - pulseRadius / 100})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

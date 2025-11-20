@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #019 - sand-dunes">
+    <meta name="created" content="2025-11-12">
+    <title>sand-dunes | Art Series #019</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #019
+         * Title: sand-dunes
+         * Author: @wisdomabioye
+         * Created: 2025-11-12
+         * Description: Desert sand dunes with wind-blown particles, light/shadow, and atmospheric haze
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        let time = 0;
+        const dunes = [];
+        const sandParticles = [];
+
+        class Dune {
+            constructor(index, totalDunes) {
+                this.index = index;
+                this.baseY = canvas.height * (0.5 + (index / totalDunes) * 0.4);
+                this.height = 80 + (index * 40);
+                this.points = [];
+                this.numPoints = 15;
+                this.speed = 0.001 + (index * 0.0005);
+                this.offset = Math.random() * 1000;
+
+                // Color based on depth (further = lighter/hazier)
+                const depth = 1 - (index / totalDunes);
+                this.hue = 35 + depth * 10; // Orange-tan range
+                this.saturation = 40 + depth * 30;
+                this.lightness = 65 + index * 3;
+                this.alpha = 0.85 + depth * 0.15;
+
+                this.generatePoints();
+            }
+
+            generatePoints() {
+                this.points = [];
+                for (let i = 0; i <= this.numPoints; i++) {
+                    const x = (i / this.numPoints) * canvas.width;
+                    const variation = (Math.sin(i * 0.5 + this.offset) * 0.5 + 0.5) * this.height * 0.3;
+                    this.points.push({ x, variation });
+                }
+            }
+
+            update(time) {
+                // Subtle shifting of dune shapes
+                for (let i = 0; i < this.points.length; i++) {
+                    const point = this.points[i];
+                    const wave = Math.sin(time * this.speed + i * 0.3 + this.offset) * 15;
+                    point.currentY = this.baseY - this.height + point.variation + wave;
+                }
+            }
+
+            draw() {
+                ctx.save();
+
+                // Create smooth curve through points
+                ctx.beginPath();
+                ctx.moveTo(0, this.points[0].currentY);
+
+                // Use quadratic curves for smooth dune shapes
+                for (let i = 0; i < this.points.length - 1; i++) {
+                    const current = this.points[i];
+                    const next = this.points[i + 1];
+                    const midX = (current.x + next.x) / 2;
+                    const midY = (current.currentY + next.currentY) / 2;
+
+                    ctx.quadraticCurveTo(current.x, current.currentY, midX, midY);
+                }
+
+                // Complete to final point and bottom
+                const last = this.points[this.points.length - 1];
+                ctx.lineTo(last.x, last.currentY);
+                ctx.lineTo(canvas.width, canvas.height);
+                ctx.lineTo(0, canvas.height);
+                ctx.closePath();
+
+                // Gradient for light/shadow on dune
+                const gradient = ctx.createLinearGradient(
+                    canvas.width * 0.3, this.baseY - this.height,
+                    canvas.width * 0.7, this.baseY
+                );
+
+                // Light side (left) to shadow side (right) - reduced brightness on left
+                gradient.addColorStop(0, `hsla(${this.hue}, ${this.saturation + 5}%, ${this.lightness - 5}%, ${this.alpha})`);
+                gradient.addColorStop(0.5, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness - 8}%, ${this.alpha})`);
+                gradient.addColorStop(1, `hsla(${this.hue - 5}, ${this.saturation + 10}%, ${this.lightness - 18}%, ${this.alpha})`);
+
+                ctx.fillStyle = gradient;
+                ctx.fill();
+
+                // Subtle ridge highlight - reduced brightness
+                ctx.strokeStyle = `hsla(${this.hue}, ${this.saturation - 10}%, ${this.lightness + 5}%, ${this.alpha * 0.5})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.restore();
+            }
+
+            shouldCreateSand() {
+                // Front dunes create more sand particles
+                return Math.random() < 0.02 * (this.index + 1);
+            }
+
+            createSandParticle() {
+                // Create particle at random point along dune ridge
+                const pointIndex = Math.floor(Math.random() * this.points.length);
+                const point = this.points[pointIndex];
+                sandParticles.push(new SandParticle(point.x, point.currentY, this.index));
+            }
+        }
+
+        class SandParticle {
+            constructor(x, y, duneIndex) {
+                this.x = x;
+                this.y = y;
+                this.vx = 1 + Math.random() * 2; // Wind blows right
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2 + 0.5;
+                this.life = 1;
+                this.decay = 0.995;
+                this.opacity = 0.3 + Math.random() * 0.4;
+
+                // Match dune colors
+                this.hue = 35 + Math.random() * 10;
+                this.saturation = 50 + Math.random() * 20;
+                this.lightness = 60 + Math.random() * 15;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Wind turbulence
+                this.vy += (Math.random() - 0.5) * 0.1;
+                this.vx *= 0.99;
+
+                this.life *= this.decay;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life * this.opacity;
+                ctx.fillStyle = `hsl(${this.hue}, ${this.saturation}%, ${this.lightness}%)`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            isDead() {
+                return this.life < 0.01 || this.x > canvas.width + 50;
+            }
+        }
+
+        // Atmospheric dust particles
+        class DustParticle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height * 0.7;
+                this.vx = 0.2 + Math.random() * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.2;
+                this.size = Math.random() * 1.5 + 0.5;
+                this.opacity = Math.random() * 0.3;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Wrap around
+                if (this.x > canvas.width) {
+                    this.x = -10;
+                }
+                if (this.y < 0) {
+                    this.y = canvas.height * 0.7;
+                }
+                if (this.y > canvas.height * 0.7) {
+                    this.y = 0;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = '#E8D4B8';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Initialize dunes (back to front)
+        const numDunes = 5;
+        for (let i = numDunes - 1; i >= 0; i--) {
+            dunes.push(new Dune(i, numDunes));
+        }
+
+        // Initialize atmospheric dust
+        const dustParticles = [];
+        for (let i = 0; i < 50; i++) {
+            dustParticles.push(new DustParticle());
+        }
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Sky gradient (desert sky - warm tones)
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGradient.addColorStop(0, '#FFE4B5'); // Pale golden
+            skyGradient.addColorStop(0.4, '#FFDAB9'); // Peach
+            skyGradient.addColorStop(1, '#DEB887'); // Burlywood
+
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            time += 0.5;
+
+            // Draw atmospheric dust
+            for (let dust of dustParticles) {
+                dust.update();
+                dust.draw();
+            }
+
+            // Update and draw dunes
+            for (let i = dunes.length - 1; i >= 0; i--) {
+                const dune = dunes[i];
+                dune.update(time);
+                dune.draw();
+
+                // Create wind-blown sand
+                if (dune.shouldCreateSand()) {
+                    dune.createSandParticle();
+                }
+            }
+
+            // Update and draw sand particles
+            for (let i = sandParticles.length - 1; i >= 0; i--) {
+                sandParticles[i].update();
+                sandParticles[i].draw();
+
+                if (sandParticles[i].isDead()) {
+                    sandParticles.splice(i, 1);
+                }
+            }
+
+            // Add atmospheric haze overlay
+            const hazeGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            hazeGradient.addColorStop(0, 'rgba(255, 250, 240, 0)');
+            hazeGradient.addColorStop(0.6, 'rgba(255, 245, 230, 0.1)');
+            hazeGradient.addColorStop(1, 'rgba(245, 222, 179, 0.2)');
+
+            ctx.fillStyle = hazeGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

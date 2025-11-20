@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #018 - ocean-waves">
+    <meta name="created" content="2025-11-11">
+    <title>ocean-waves | Art Series #018</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #018
+         * Title: ocean-waves
+         * Author: @wisdomabioye
+         * Created: 2025-11-11
+         * Description: Layered ocean waves with foam, depth gradients, and shimmer effects
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        let time = 0;
+        const waves = [];
+        const foamParticles = [];
+
+        class Wave {
+            constructor(index, totalWaves) {
+                this.index = index;
+                this.y = canvas.height * (0.3 + (index / totalWaves) * 0.6);
+                this.amplitude = 30 + (index * 15);
+                this.frequency = 0.005 - (index * 0.0008);
+                this.speed = 0.02 + (index * 0.005);
+                this.phase = Math.random() * Math.PI * 2;
+                this.points = 200;
+
+                // Color based on depth (deeper = darker)
+                const depth = index / totalWaves;
+                this.hue = 200 + depth * 20;
+                this.saturation = 60 + depth * 20;
+                this.lightness = 50 - depth * 25;
+                this.alpha = 0.6 + depth * 0.4;
+            }
+
+            getY(x, time) {
+                // Multiple sine waves for more natural motion
+                const wave1 = Math.sin(x * this.frequency + time * this.speed + this.phase) * this.amplitude;
+                const wave2 = Math.sin(x * this.frequency * 1.5 + time * this.speed * 0.7 + this.phase + 1) * (this.amplitude * 0.5);
+                const wave3 = Math.sin(x * this.frequency * 0.8 + time * this.speed * 1.3 + this.phase + 2) * (this.amplitude * 0.3);
+
+                return this.y + wave1 + wave2 + wave3;
+            }
+
+            draw(time) {
+                ctx.save();
+
+                // Draw wave body
+                ctx.beginPath();
+                for (let i = 0; i <= this.points; i++) {
+                    const x = (i / this.points) * canvas.width;
+                    const y = this.getY(x, time);
+
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+
+                // Complete the path to bottom
+                ctx.lineTo(canvas.width, canvas.height);
+                ctx.lineTo(0, canvas.height);
+                ctx.closePath();
+
+                // Gradient fill
+                const gradient = ctx.createLinearGradient(0, this.y - this.amplitude, 0, canvas.height);
+                gradient.addColorStop(0, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness + 15}%, ${this.alpha})`);
+                gradient.addColorStop(0.5, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, ${this.alpha})`);
+                gradient.addColorStop(1, `hsla(${this.hue - 10}, ${this.saturation + 10}%, ${this.lightness - 10}%, ${this.alpha})`);
+
+                ctx.fillStyle = gradient;
+                ctx.fill();
+
+                // Draw wave crest with highlights
+                ctx.strokeStyle = `hsla(${this.hue}, ${this.saturation}%, ${this.lightness + 30}%, ${this.alpha * 0.5})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Add foam particles on crests
+                if (this.index < 3) { // Only front waves
+                    this.createFoam(time);
+                }
+
+                ctx.restore();
+            }
+
+            createFoam(time) {
+                // Randomly create foam particles at wave peaks
+                if (Math.random() < 0.05) {
+                    const x = Math.random() * canvas.width;
+                    const y = this.getY(x, time);
+
+                    // Check if near a peak
+                    const dy = Math.abs(this.getY(x + 1, time) - this.getY(x - 1, time));
+                    if (dy < 2) { // Near peak
+                        foamParticles.push(new FoamParticle(x, y));
+                    }
+                }
+            }
+        }
+
+        class FoamParticle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = Math.random() * -0.3;
+                this.size = Math.random() * 3 + 1;
+                this.life = 1;
+                this.decay = 0.98;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.01; // Gravity
+                this.life *= this.decay;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * this.life, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Outer glow
+                ctx.fillStyle = 'rgba(200, 230, 255, 0.5)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * this.life * 1.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            isDead() {
+                return this.life < 0.01;
+            }
+        }
+
+        // Shimmer particles for light reflection
+        class ShimmerParticle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height * (0.3 + Math.random() * 0.5);
+                this.size = Math.random() * 2 + 1;
+                this.brightness = Math.random();
+                this.speed = Math.random() * 0.005 + 0.002;
+                this.phase = Math.random() * Math.PI * 2;
+            }
+
+            update(time) {
+                // Pulsing brightness
+                this.brightness = 0.5 + Math.sin(time * this.speed + this.phase) * 0.5;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.brightness * 0.6;
+                ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Glow
+                ctx.globalAlpha = this.brightness * 0.3;
+                ctx.fillStyle = 'rgba(200, 230, 255, 1)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        // Initialize waves (back to front for proper layering)
+        const numWaves = 6;
+        for (let i = numWaves - 1; i >= 0; i--) {
+            waves.push(new Wave(i, numWaves));
+        }
+
+        // Initialize shimmer particles
+        const shimmerParticles = [];
+        for (let i = 0; i < 80; i++) {
+            shimmerParticles.push(new ShimmerParticle());
+        }
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Sky gradient background
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGradient.addColorStop(0, '#87CEEB');
+            skyGradient.addColorStop(0.4, '#B0E2FF');
+            skyGradient.addColorStop(1, '#4682B4');
+
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            time += 0.3;
+
+            // Draw shimmer particles (underwater light reflections)
+            for (let shimmer of shimmerParticles) {
+                shimmer.update(time);
+                shimmer.draw();
+            }
+
+            // Draw waves from back to front
+            for (let i = waves.length - 1; i >= 0; i--) {
+                waves[i].draw(time);
+            }
+
+            // Update and draw foam particles
+            for (let i = foamParticles.length - 1; i >= 0; i--) {
+                foamParticles[i].update();
+                foamParticles[i].draw();
+
+                if (foamParticles[i].isDead()) {
+                    foamParticles.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

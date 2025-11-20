@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #016 - ripple-effects">
+    <meta name="created" content="2025-11-09">
+    <title>ripple-effects | Art Series #016</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #016
+         * Title: ripple-effects
+         * Author: @wisdomabioye
+         * Created: 2025-11-09
+         * Description: Expanding concentric ripples with wave interference and color gradients
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        const ripples = [];
+        let autoRippleTimer = 0;
+        const autoRippleInterval = 80; // frames between auto ripples
+
+        class Ripple {
+            constructor(x, y, maxRadius = 300) {
+                this.x = x;
+                this.y = y;
+                this.radius = 0;
+                this.maxRadius = maxRadius;
+                this.speed = 2;
+                this.opacity = 1;
+                this.lineWidth = 3;
+
+                // Random color hue
+                this.hue = Math.random() * 360;
+                this.saturation = 70 + Math.random() * 30;
+                this.lightness = 50 + Math.random() * 20;
+
+                // Multiple wave rings
+                this.waves = 3;
+                this.waveSpacing = 40;
+            }
+
+            update() {
+                this.radius += this.speed;
+
+                // Fade out as it expands
+                this.opacity = 1 - (this.radius / this.maxRadius);
+
+                // Slow down slightly as it expands
+                this.speed *= 0.99;
+            }
+
+            draw() {
+                ctx.save();
+
+                // Draw multiple concentric waves
+                for (let i = 0; i < this.waves; i++) {
+                    const waveRadius = this.radius - (i * this.waveSpacing);
+
+                    if (waveRadius > 0) {
+                        const waveOpacity = this.opacity * (1 - (i / this.waves));
+
+                        // Outer glow
+                        ctx.strokeStyle = `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, ${waveOpacity * 0.3})`;
+                        ctx.lineWidth = this.lineWidth + 4;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, waveRadius, 0, Math.PI * 2);
+                        ctx.stroke();
+
+                        // Main ring
+                        ctx.strokeStyle = `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, ${waveOpacity})`;
+                        ctx.lineWidth = this.lineWidth;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, waveRadius, 0, Math.PI * 2);
+                        ctx.stroke();
+
+                        // Inner bright highlight
+                        ctx.strokeStyle = `hsla(${this.hue}, ${this.saturation}%, ${this.lightness + 20}%, ${waveOpacity * 0.6})`;
+                        ctx.lineWidth = this.lineWidth - 1;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, waveRadius, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+
+                ctx.restore();
+            }
+
+            isDead() {
+                return this.radius > this.maxRadius;
+            }
+        }
+
+        // Create ripple on click/touch
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            ripples.push(new Ripple(x, y));
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            ripples.push(new Ripple(x, y));
+        });
+
+        // Auto-generate ripples
+        function createAutoRipple() {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const maxRadius = 200 + Math.random() * 200;
+            ripples.push(new Ripple(x, y, maxRadius));
+        }
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Create fade trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Auto-generate ripples periodically
+            autoRippleTimer++;
+            if (autoRippleTimer >= autoRippleInterval) {
+                createAutoRipple();
+                autoRippleTimer = 0;
+            }
+
+            // Update and draw ripples
+            for (let i = ripples.length - 1; i >= 0; i--) {
+                ripples[i].update();
+                ripples[i].draw();
+
+                // Remove dead ripples
+                if (ripples[i].isDead()) {
+                    ripples.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #006 - magnetic-field-particles">
+    <meta name="created" content="2025-10-30">
+    <title>magnetic-field-particles | Art Series #006</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #006
+         * Title: magnetic-field-particles
+         * Author: @wisdomabioye
+         * Created: 2025-10-30
+         * Description: Particles flowing along magnetic field lines between poles with attraction/repulsion forces
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        // Magnetic pole class
+        class MagneticPole {
+            constructor(x, y, strength, polarity) {
+                this.x = x;
+                this.y = y;
+                this.strength = strength;
+                this.polarity = polarity; // 1 for positive, -1 for negative
+            }
+
+            draw() {
+                ctx.save();
+
+                // Draw pole with glow
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 30);
+
+                if (this.polarity > 0) {
+                    // Positive pole (red)
+                    gradient.addColorStop(0, 'rgba(255, 50, 50, 0.8)');
+                    gradient.addColorStop(0.5, 'rgba(255, 50, 50, 0.4)');
+                    gradient.addColorStop(1, 'rgba(255, 50, 50, 0)');
+                } else {
+                    // Negative pole (blue)
+                    gradient.addColorStop(0, 'rgba(50, 150, 255, 0.8)');
+                    gradient.addColorStop(0.5, 'rgba(50, 150, 255, 0.4)');
+                    gradient.addColorStop(1, 'rgba(50, 150, 255, 0)');
+                }
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 30, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw pole symbol
+                ctx.fillStyle = this.polarity > 0 ? '#ff3232' : '#3296ff';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.polarity > 0 ? '+' : '-', this.x, this.y);
+
+                ctx.restore();
+            }
+        }
+
+        // Particle class
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = 0;
+                this.vy = 0;
+                this.trail = [];
+                this.maxTrailLength = 20;
+                this.charge = Math.random() > 0.5 ? 1 : -1;
+                this.hue = this.charge > 0 ? 0 : 200; // Red for positive, blue for negative
+            }
+
+            applyForce(fx, fy) {
+                this.vx += fx;
+                this.vy += fy;
+            }
+
+            update(poles) {
+                // Store trail
+                this.trail.push({ x: this.x, y: this.y });
+                if (this.trail.length > this.maxTrailLength) {
+                    this.trail.shift();
+                }
+
+                // Calculate forces from all poles
+                for (let pole of poles) {
+                    let dx = pole.x - this.x;
+                    let dy = pole.y - this.y;
+                    let distSq = dx * dx + dy * dy;
+                    let dist = Math.sqrt(distSq);
+
+                    if (dist > 1) {
+                        // Magnetic force: F = k * (pole_strength * particle_charge) / distance^2
+                        let force = (pole.strength * pole.polarity * this.charge) / distSq;
+
+                        // Normalize and apply force
+                        let fx = (dx / dist) * force;
+                        let fy = (dy / dist) * force;
+
+                        this.applyForce(fx, fy);
+                    }
+                }
+
+                // Apply velocity damping
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+
+                // Limit velocity
+                let speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                if (speed > 5) {
+                    this.vx = (this.vx / speed) * 5;
+                    this.vy = (this.vy / speed) * 5;
+                }
+
+                // Update position
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Wrap around edges
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+            }
+
+            draw() {
+                // Draw trail
+                ctx.save();
+                ctx.strokeStyle = this.charge > 0 ? 'rgba(255, 100, 100, 0.5)' : 'rgba(100, 150, 255, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                for (let i = 0; i < this.trail.length; i++) {
+                    if (i === 0) {
+                        ctx.moveTo(this.trail[i].x, this.trail[i].y);
+                    } else {
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                }
+                ctx.stroke();
+
+                // Draw particle
+                ctx.fillStyle = this.charge > 0 ? 'rgba(255, 50, 50, 0.9)' : 'rgba(50, 150, 255, 0.9)';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.charge > 0 ? '#ff3232' : '#3296ff';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        // Create magnetic poles
+        const poles = [
+            new MagneticPole(canvas.width * 0.3, canvas.height * 0.5, 500, 1),  // Positive
+            new MagneticPole(canvas.width * 0.7, canvas.height * 0.5, 500, -1)  // Negative
+        ];
+
+        // Create particles
+        const particles = [];
+        const numParticles = 150;
+
+        for (let i = 0; i < numParticles; i++) {
+            particles.push(new Particle(
+                Math.random() * canvas.width,
+                Math.random() * canvas.height
+            ));
+        }
+
+        // Mouse interaction - move poles
+        let draggedPole = null;
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            for (let pole of poles) {
+                const dist = Math.sqrt((mouseX - pole.x) ** 2 + (mouseY - pole.y) ** 2);
+                if (dist < 30) {
+                    draggedPole = pole;
+                    break;
+                }
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (draggedPole) {
+                const rect = canvas.getBoundingClientRect();
+                draggedPole.x = e.clientX - rect.left;
+                draggedPole.y = e.clientY - rect.top;
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            draggedPole = null;
+        });
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Create fade trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw poles
+            for (let pole of poles) {
+                pole.draw();
+            }
+
+            // Update and draw particles
+            for (let particle of particles) {
+                particle.update(poles);
+                particle.draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

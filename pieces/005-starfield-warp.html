@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #005 - starfield-warp">
+    <meta name="created" content="2025-10-29">
+    <title>starfield-warp | Art Series #005</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #005
+         * Title: starfield-warp
+         * Author: @wisdomabioye
+         * Created: 2025-10-29
+         * Description: Hyperspace warp effect with 3D perspective and streaking stars
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const numStars = 500;
+        let speed = 20;
+
+        class Star {
+            constructor() {
+                this.x = Math.random() * canvas.width - centerX;
+                this.y = Math.random() * canvas.height - centerY;
+                this.z = Math.random() * canvas.width;
+                this.pz = this.z;
+            }
+
+            update() {
+                this.z -= speed;
+
+                // Reset star when it passes the camera
+                if (this.z < 1) {
+                    this.x = Math.random() * canvas.width - centerX;
+                    this.y = Math.random() * canvas.height - centerY;
+                    this.z = canvas.width;
+                    this.pz = this.z;
+                }
+            }
+
+            draw() {
+                // 3D to 2D projection
+                let sx = (this.x / this.z) * canvas.width + centerX;
+                let sy = (this.y / this.z) * canvas.width + centerY;
+
+                // Previous position for trail
+                let px = (this.x / this.pz) * canvas.width + centerX;
+                let py = (this.y / this.pz) * canvas.width + centerY;
+
+                this.pz = this.z;
+
+                // Calculate star size based on depth
+                let size = (1 - this.z / canvas.width) * 3;
+
+                // Calculate brightness based on speed and distance
+                let brightness = (1 - this.z / canvas.width) * 255;
+
+                // Draw the streak
+                ctx.strokeStyle = `rgba(${brightness}, ${brightness}, ${brightness}, 0.8)`;
+                ctx.lineWidth = size;
+                ctx.beginPath();
+                ctx.moveTo(px, py);
+                ctx.lineTo(sx, sy);
+                ctx.stroke();
+
+                // Draw the star point
+                ctx.fillStyle = `rgba(255, 255, 255, ${(1 - this.z / canvas.width)})`;
+                ctx.beginPath();
+                ctx.arc(sx, sy, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Create stars
+        const stars = [];
+        for (let i = 0; i < numStars; i++) {
+            stars.push(new Star());
+        }
+
+        // Mouse interaction for speed control
+        let mouseDown = false;
+
+        canvas.addEventListener('mousedown', () => {
+            mouseDown = true;
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            mouseDown = false;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (mouseDown) {
+                speed = Math.max(5, Math.min(50, (e.clientY / canvas.height) * 50));
+            }
+        });
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Clear canvas with black
+            ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw all stars
+            for (let star of stars) {
+                star.update();
+                star.draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

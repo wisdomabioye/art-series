@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #011 - swarm-intelligence-patterns">
+    <meta name="created" content="2025-11-04">
+    <title>swarm-intelligence-patterns | Art Series #011</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #011
+         * Title: swarm-intelligence-patterns
+         * Author: @wisdomabioye
+         * Created: 2025-11-04
+         * Description: Swarm intelligence with emergent patterns from collective behavior
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        class Agent {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.maxSpeed = 3;
+                this.maxForce = 0.1;
+                this.perceptionRadius = 80;
+                this.trail = [];
+                this.maxTrailLength = 30;
+
+                // Color based on position
+                this.hue = (this.x / canvas.width) * 360;
+            }
+
+            edges() {
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.y < 0) this.y = canvas.height;
+            }
+
+            align(agents) {
+                let steering = { x: 0, y: 0 };
+                let total = 0;
+
+                for (let other of agents) {
+                    const d = this.distance(other);
+                    if (other !== this && d < this.perceptionRadius) {
+                        steering.x += other.vx;
+                        steering.y += other.vy;
+                        total++;
+                    }
+                }
+
+                if (total > 0) {
+                    steering.x /= total;
+                    steering.y /= total;
+                    const mag = Math.sqrt(steering.x ** 2 + steering.y ** 2);
+                    if (mag > 0) {
+                        steering.x = (steering.x / mag) * this.maxSpeed;
+                        steering.y = (steering.y / mag) * this.maxSpeed;
+                    }
+                    steering.x -= this.vx;
+                    steering.y -= this.vy;
+                    return this.limit(steering);
+                }
+                return steering;
+            }
+
+            cohesion(agents) {
+                let steering = { x: 0, y: 0 };
+                let total = 0;
+
+                for (let other of agents) {
+                    const d = this.distance(other);
+                    if (other !== this && d < this.perceptionRadius) {
+                        steering.x += other.x;
+                        steering.y += other.y;
+                        total++;
+                    }
+                }
+
+                if (total > 0) {
+                    steering.x /= total;
+                    steering.y /= total;
+                    steering.x -= this.x;
+                    steering.y -= this.y;
+                    const mag = Math.sqrt(steering.x ** 2 + steering.y ** 2);
+                    if (mag > 0) {
+                        steering.x = (steering.x / mag) * this.maxSpeed;
+                        steering.y = (steering.y / mag) * this.maxSpeed;
+                    }
+                    steering.x -= this.vx;
+                    steering.y -= this.vy;
+                    return this.limit(steering);
+                }
+                return steering;
+            }
+
+            separation(agents) {
+                let steering = { x: 0, y: 0 };
+                let total = 0;
+
+                for (let other of agents) {
+                    const d = this.distance(other);
+                    if (other !== this && d < this.perceptionRadius / 2) {
+                        let diff = { x: this.x - other.x, y: this.y - other.y };
+                        if (d > 0) {
+                            diff.x /= d;
+                            diff.y /= d;
+                        }
+                        steering.x += diff.x;
+                        steering.y += diff.y;
+                        total++;
+                    }
+                }
+
+                if (total > 0) {
+                    steering.x /= total;
+                    steering.y /= total;
+                    const mag = Math.sqrt(steering.x ** 2 + steering.y ** 2);
+                    if (mag > 0) {
+                        steering.x = (steering.x / mag) * this.maxSpeed;
+                        steering.y = (steering.y / mag) * this.maxSpeed;
+                    }
+                    steering.x -= this.vx;
+                    steering.y -= this.vy;
+                    return this.limit(steering);
+                }
+                return steering;
+            }
+
+            flock(agents) {
+                const alignment = this.align(agents);
+                const cohesion = this.cohesion(agents);
+                const separation = this.separation(agents);
+
+                // Apply weights
+                this.vx += alignment.x * 1.0;
+                this.vy += alignment.y * 1.0;
+                this.vx += cohesion.x * 1.0;
+                this.vy += cohesion.y * 1.0;
+                this.vx += separation.x * 1.5;
+                this.vy += separation.y * 1.5;
+            }
+
+            update() {
+                // Store trail
+                this.trail.push({ x: this.x, y: this.y });
+                if (this.trail.length > this.maxTrailLength) {
+                    this.trail.shift();
+                }
+
+                // Update velocity
+                const speed = Math.sqrt(this.vx ** 2 + this.vy ** 2);
+                if (speed > this.maxSpeed) {
+                    this.vx = (this.vx / speed) * this.maxSpeed;
+                    this.vy = (this.vy / speed) * this.maxSpeed;
+                }
+
+                // Update position
+                this.x += this.vx;
+                this.y += this.vy;
+            }
+
+            draw() {
+                ctx.save();
+
+                // Draw trail
+                if (this.trail.length > 1) {
+                    ctx.strokeStyle = `hsla(${this.hue}, 70%, 50%, 0.3)`;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(this.trail[0].x, this.trail[0].y);
+
+                    for (let i = 1; i < this.trail.length; i++) {
+                        const alpha = i / this.trail.length;
+                        ctx.strokeStyle = `hsla(${this.hue}, 70%, 50%, ${alpha * 0.3})`;
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                    ctx.stroke();
+                }
+
+                // Draw agent
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 5);
+                gradient.addColorStop(0, `hsla(${this.hue}, 80%, 70%, 1)`);
+                gradient.addColorStop(0.5, `hsla(${this.hue}, 70%, 50%, 0.8)`);
+                gradient.addColorStop(1, `hsla(${this.hue}, 60%, 40%, 0)`);
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw core
+                ctx.fillStyle = `hsl(${this.hue}, 90%, 80%)`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            distance(other) {
+                const dx = this.x - other.x;
+                const dy = this.y - other.y;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            limit(vector) {
+                const mag = Math.sqrt(vector.x ** 2 + vector.y ** 2);
+                if (mag > this.maxForce) {
+                    vector.x = (vector.x / mag) * this.maxForce;
+                    vector.y = (vector.y / mag) * this.maxForce;
+                }
+                return vector;
+            }
+        }
+
+        // Create swarm
+        const agents = [];
+        const numAgents = 200;
+
+        for (let i = 0; i < numAgents; i++) {
+            agents.push(new Agent());
+        }
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Create fade trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw all agents
+            for (let agent of agents) {
+                agent.edges();
+                agent.flock(agents);
+                agent.update();
+                agent.draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #014 - sine-wave-symphony">
+    <meta name="created" content="2025-11-07">
+    <title>sine-wave-symphony | Art Series #014</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #014
+         * Title: sine-wave-symphony
+         * Author: @wisdomabioye
+         * Created: 2025-11-07
+         * Description: Multiple layered sine waves creating harmonic visual symphony
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        let time = 0;
+
+        class SineWave {
+            constructor(index, total) {
+                this.index = index;
+                this.y = canvas.height / 2;
+                this.amplitude = 50 + (index * 20);
+                this.frequency = 0.01 + (index * 0.002);
+                this.speed = 0.02 + (index * 0.01);
+                this.phase = (index / total) * Math.PI * 2;
+
+                // Color based on position in spectrum
+                this.hue = (index / total) * 360;
+                this.saturation = 70 + Math.random() * 30;
+                this.lightness = 50 + Math.random() * 20;
+                this.alpha = 0.3 + (index / total) * 0.4;
+
+                // Number of points to draw
+                this.points = 200;
+            }
+
+            getY(x, time) {
+                return this.y +
+                       Math.sin(x * this.frequency + time * this.speed + this.phase) * this.amplitude;
+            }
+
+            draw(time) {
+                ctx.save();
+
+                // Create gradient for the wave
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+                gradient.addColorStop(0, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, 0)`);
+                gradient.addColorStop(0.2, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, ${this.alpha})`);
+                gradient.addColorStop(0.5, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, ${this.alpha * 1.2})`);
+                gradient.addColorStop(0.8, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, ${this.alpha})`);
+                gradient.addColorStop(1, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, 0)`);
+
+                // Draw the wave line
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                ctx.beginPath();
+                for (let i = 0; i <= this.points; i++) {
+                    const x = (i / this.points) * canvas.width;
+                    const y = this.getY(x, time);
+
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+
+                // Draw fill underneath with transparency
+                ctx.globalAlpha = this.alpha * 0.3;
+                ctx.fillStyle = gradient;
+
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height);
+                for (let i = 0; i <= this.points; i++) {
+                    const x = (i / this.points) * canvas.width;
+                    const y = this.getY(x, time);
+                    ctx.lineTo(x, y);
+                }
+                ctx.lineTo(canvas.width, canvas.height);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        // Create multiple waves
+        const numWaves = 8;
+        const waves = [];
+
+        for (let i = 0; i < numWaves; i++) {
+            waves.push(new SineWave(i, numWaves));
+        }
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = 'rgba(15, 12, 41, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update time
+            time += 0.5;
+
+            // Draw all waves from back to front
+            for (let i = waves.length - 1; i >= 0; i--) {
+                waves[i].draw(time);
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

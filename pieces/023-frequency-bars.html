@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #022 - frequency-bars">
+    <meta name="created" content="2025-11-16">
+    <title>frequency-bars | Art Series #022</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #022
+         * Title: frequency-bars
+         * Author: @wisdomabioye
+         * Created: 2025-11-16
+         * Description: Animated frequency spectrum bars with smooth transitions and mirror reflection
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        const numBars = 64;
+        const bars = [];
+        let time = 0;
+
+        class FrequencyBar {
+            constructor(index, total) {
+                this.index = index;
+                this.x = (index / total) * canvas.width;
+                this.width = (canvas.width / total) * 0.85;
+                this.height = 0;
+                this.targetHeight = 0;
+                this.smoothing = 0.2;
+
+                // Color based on frequency (low = red, mid = green, high = blue-purple)
+                this.hue = (index / total) * 300;
+                this.saturation = 80;
+                this.lightness = 55;
+            }
+
+            update() {
+                // Simulate audio frequency with layered sine waves
+                const freq = (this.index / numBars) * 10;
+
+                // Multiple wave layers for more interesting patterns
+                const wave1 = Math.sin(time * 0.03 + this.index * 0.15) * 0.5 + 0.5;
+                const wave2 = Math.sin(time * 0.05 + this.index * 0.08) * 0.3 + 0.3;
+                const wave3 = Math.sin(time * 0.02 + this.index * 0.2) * 0.2 + 0.2;
+
+                // Bass boost for lower frequencies
+                const bassBoost = this.index < numBars * 0.2 ? 1.5 : 1;
+
+                // Treble detail for higher frequencies
+                const trebleDetail = this.index > numBars * 0.7 ?
+                    Math.abs(Math.sin(time * 0.1 + this.index)) : 1;
+
+                const combined = (wave1 + wave2 + wave3) / 3;
+                this.targetHeight = combined * bassBoost * trebleDetail * (canvas.height * 0.4);
+
+                // Smooth interpolation toward target
+                this.height += (this.targetHeight - this.height) * this.smoothing;
+            }
+
+            draw() {
+                const centerY = canvas.height / 2;
+
+                ctx.save();
+
+                // Create gradient from center outward
+                const gradient = ctx.createLinearGradient(
+                    this.x + this.width / 2,
+                    centerY - this.height,
+                    this.x + this.width / 2,
+                    centerY + this.height
+                );
+
+                gradient.addColorStop(0, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness + 20}%, 0.9)`);
+                gradient.addColorStop(0.5, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, 0.95)`);
+                gradient.addColorStop(1, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness + 20}%, 0.9)`);
+
+                // Draw bar (mirrored top and bottom from center)
+                ctx.fillStyle = gradient;
+                ctx.fillRect(this.x, centerY - this.height, this.width, this.height);
+                ctx.fillRect(this.x, centerY, this.width, this.height);
+
+                // Add glow effect
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, 0.8)`;
+                ctx.fillRect(this.x, centerY - this.height, this.width, this.height);
+                ctx.fillRect(this.x, centerY, this.width, this.height);
+
+                // Bright top/bottom caps
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = `hsla(${this.hue}, ${this.saturation}%, ${this.lightness + 25}%, 1)`;
+
+                const capHeight = 3;
+                ctx.fillRect(this.x, centerY - this.height, this.width, capHeight);
+                ctx.fillRect(this.x, centerY + this.height - capHeight, this.width, capHeight);
+
+                ctx.restore();
+            }
+        }
+
+        // Initialize bars
+        for (let i = 0; i < numBars; i++) {
+            bars.push(new FrequencyBar(i, numBars));
+        }
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Dark background with slight fade
+            ctx.fillStyle = 'rgba(5, 5, 15, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            time++;
+
+            // Update and draw bars
+            for (let bar of bars) {
+                bar.update();
+                bar.draw();
+            }
+
+            // Draw center line
+            ctx.save();
+            ctx.strokeStyle = 'rgba(100, 100, 150, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+            ctx.restore();
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

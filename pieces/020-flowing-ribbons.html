@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #020 - flowing-ribbons">
+    <meta name="created" content="2025-11-13">
+    <title>flowing-ribbons | Art Series #020</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #020
+         * Title: flowing-ribbons
+         * Author: @wisdomabioye
+         * Created: 2025-11-13
+         * Description: Elegant 3D flowing ribbons with twisting motion and gradient colors
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        let time = 0;
+        const ribbons = [];
+
+        class Ribbon {
+            constructor(index, total) {
+                this.index = index;
+                this.segments = 150;
+                this.points = [];
+                this.width = 40 + Math.random() * 40;
+
+                // Starting position
+                this.startX = canvas.width * (0.2 + (index / total) * 0.6);
+                this.startY = canvas.height / 2;
+
+                // Flow parameters
+                this.flowSpeed = 0.02 + Math.random() * 0.02;
+                this.amplitude = 100 + Math.random() * 100;
+                this.frequency = 0.01 + Math.random() * 0.01;
+                this.twist = 0;
+                this.twistSpeed = 0.03 + Math.random() * 0.02;
+                this.offset = Math.random() * Math.PI * 2;
+
+                // Color
+                this.hue = (index / total) * 360;
+                this.saturation = 70 + Math.random() * 30;
+                this.lightness = 50 + Math.random() * 20;
+
+                this.initializePoints();
+            }
+
+            initializePoints() {
+                this.points = [];
+                for (let i = 0; i < this.segments; i++) {
+                    this.points.push({
+                        x: 0,
+                        y: 0,
+                        z: 0,
+                        width: 0
+                    });
+                }
+            }
+
+            update(time) {
+                this.twist = time * this.twistSpeed;
+
+                for (let i = 0; i < this.segments; i++) {
+                    const t = i / this.segments;
+
+                    // Horizontal flowing path
+                    const x = this.startX + (t - 0.5) * canvas.width * 0.8;
+
+                    // Vertical wave motion
+                    const wave1 = Math.sin(t * Math.PI * 4 + time * this.flowSpeed + this.offset) * this.amplitude;
+                    const wave2 = Math.sin(t * Math.PI * 2 + time * this.flowSpeed * 0.5) * (this.amplitude * 0.5);
+                    const y = this.startY + wave1 + wave2;
+
+                    // Z-depth creates 3D twist effect
+                    const z = Math.sin(t * Math.PI * 6 + this.twist) * 50;
+
+                    // Width varies with z-depth (perspective)
+                    const depthFactor = 1 + (z / 100);
+                    const width = this.width * depthFactor * (0.8 + Math.sin(t * Math.PI * 2) * 0.2);
+
+                    this.points[i] = { x, y, z, width };
+                }
+            }
+
+            draw() {
+                // Sort segments by z-depth (back to front)
+                const sortedIndices = this.points
+                    .map((p, i) => ({ index: i, z: p.z }))
+                    .sort((a, b) => a.z - b.z)
+                    .map(item => item.index);
+
+                // Draw ribbon segments
+                for (let idx of sortedIndices) {
+                    if (idx >= this.points.length - 1) continue;
+
+                    const p1 = this.points[idx];
+                    const p2 = this.points[idx + 1];
+
+                    // Calculate perpendicular offset for ribbon width
+                    const dx = p2.x - p1.x;
+                    const dy = p2.y - p1.y;
+                    const len = Math.sqrt(dx * dx + dy * dy);
+                    const perpX = -dy / len;
+                    const perpY = dx / len;
+
+                    // Ribbon corners
+                    const x1a = p1.x + perpX * p1.width / 2;
+                    const y1a = p1.y + perpY * p1.width / 2;
+                    const x1b = p1.x - perpX * p1.width / 2;
+                    const y1b = p1.y - perpY * p1.width / 2;
+
+                    const x2a = p2.x + perpX * p2.width / 2;
+                    const y2a = p2.y + perpY * p2.width / 2;
+                    const x2b = p2.x - perpX * p2.width / 2;
+                    const y2b = p2.y - perpY * p2.width / 2;
+
+                    ctx.save();
+
+                    // Alpha based on z-depth
+                    const alpha = 0.4 + (p1.z + 50) / 100 * 0.4;
+
+                    // Color variation along ribbon
+                    const t = idx / this.segments;
+                    const hueShift = Math.sin(t * Math.PI * 2 + time * 0.05) * 30;
+                    const currentHue = this.hue + hueShift;
+
+                    // Gradient across ribbon width
+                    const gradient = ctx.createLinearGradient(x1a, y1a, x1b, y1b);
+                    gradient.addColorStop(0, `hsla(${currentHue}, ${this.saturation}%, ${this.lightness + 20}%, ${alpha})`);
+                    gradient.addColorStop(0.5, `hsla(${currentHue}, ${this.saturation}%, ${this.lightness}%, ${alpha})`);
+                    gradient.addColorStop(1, `hsla(${currentHue}, ${this.saturation}%, ${this.lightness - 10}%, ${alpha})`);
+
+                    // Draw segment
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.moveTo(x1a, y1a);
+                    ctx.lineTo(x2a, y2a);
+                    ctx.lineTo(x2b, y2b);
+                    ctx.lineTo(x1b, y1b);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Subtle edge highlight
+                    if (p1.z > 0) {
+                        ctx.strokeStyle = `hsla(${currentHue}, ${this.saturation}%, ${this.lightness + 30}%, ${alpha * 0.5})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(x1a, y1a);
+                        ctx.lineTo(x2a, y2a);
+                        ctx.stroke();
+                    }
+
+                    ctx.restore();
+                }
+
+                // Draw centerline for definition
+                ctx.save();
+                ctx.strokeStyle = `hsla(${this.hue}, ${this.saturation}%, ${this.lightness - 20}%, 0.3)`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                for (let i = 0; i < this.points.length; i++) {
+                    const p = this.points[i];
+                    if (i === 0) {
+                        ctx.moveTo(p.x, p.y);
+                    } else {
+                        ctx.lineTo(p.x, p.y);
+                    }
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // Create multiple ribbons
+        const numRibbons = 5;
+        for (let i = 0; i < numRibbons; i++) {
+            ribbons.push(new Ribbon(i, numRibbons));
+        }
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Clear with fade for trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            time += 0.5;
+
+            // Update and draw ribbons
+            for (let ribbon of ribbons) {
+                ribbon.update(time);
+                ribbon.draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

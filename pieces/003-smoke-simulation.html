@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #003 - smoke-simulation">
+    <meta name="created" content="2025-10-27">
+    <title>smoke-simulation | Art Series #003</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #003
+         * Title: smoke-simulation
+         * Author: @wisdomabioye
+         * Created: 2025-10-27
+         * Description: Realistic smoke particle system with turbulent flow, expansion, and fade effects
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        // Perlin-like noise for turbulence
+        class SimplexNoise {
+            constructor() {
+                this.seed = Math.random() * 1000;
+            }
+
+            noise(x, y) {
+                const X = Math.floor(x) & 255;
+                const Y = Math.floor(y) & 255;
+                x -= Math.floor(x);
+                y -= Math.floor(y);
+                const u = this.fade(x);
+                const v = this.fade(y);
+                return this.lerp(v,
+                    this.lerp(u, this.grad(X, Y, x, y), this.grad(X + 1, Y, x - 1, y)),
+                    this.lerp(u, this.grad(X, Y + 1, x, y - 1), this.grad(X + 1, Y + 1, x - 1, y - 1))
+                );
+            }
+
+            fade(t) {
+                return t * t * t * (t * (t * 6 - 15) + 10);
+            }
+
+            lerp(t, a, b) {
+                return a + t * (b - a);
+            }
+
+            grad(x, y, dx, dy) {
+                const hash = (x + y * 57 + this.seed) % 4;
+                switch (hash) {
+                    case 0: return dx + dy;
+                    case 1: return -dx + dy;
+                    case 2: return dx - dy;
+                    case 3: return -dx - dy;
+                }
+            }
+        }
+
+        const noise = new SimplexNoise();
+
+        // Smoke particle class
+        class SmokeParticle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = -Math.random() * 0.5 - 0.5;
+                this.size = Math.random() * 20 + 10;
+                this.maxSize = this.size * 4;
+                this.growthRate = Math.random() * 0.1 + 0.05;
+                this.alpha = 0.8;
+                this.fadeRate = Math.random() * 0.005 + 0.002;
+                this.life = 1;
+                this.lifeDecay = Math.random() * 0.003 + 0.002;
+                this.color = Math.random() > 0.5 ?
+                    { r: 200, g: 200, b: 200 } :
+                    { r: 150, g: 150, b: 150 };
+                this.time = Math.random() * 1000;
+            }
+
+            update() {
+                // Add turbulence using noise
+                const noiseScale = 0.005;
+                const noiseStrength = 0.3;
+                const nx = noise.noise(this.x * noiseScale, this.time * 0.001) || 0;
+                const ny = noise.noise(this.time * 0.001, this.y * noiseScale) || 0;
+
+                this.vx += nx * noiseStrength;
+                this.vy += ny * noiseStrength * 0.5;
+
+                // Apply velocity
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Drift upward
+                this.vy -= 0.01;
+
+                // Damping
+                this.vx *= 0.99;
+                this.vy *= 0.99;
+
+                // Grow and fade
+                if (this.size < this.maxSize) {
+                    this.size += this.growthRate;
+                }
+                this.alpha -= this.fadeRate;
+                this.life -= this.lifeDecay;
+
+                this.time += 1;
+            }
+
+            draw() {
+                // Validate all values are finite
+                if (!isFinite(this.x) || !isFinite(this.y) || !isFinite(this.size) || this.size <= 0) {
+                    return;
+                }
+
+                ctx.save();
+
+                // Create radial gradient for soft smoke effect
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.size
+                );
+
+                const alpha = Math.max(0, this.alpha * this.life);
+                gradient.addColorStop(0, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${alpha * 0.6})`);
+                gradient.addColorStop(0.5, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${alpha * 0.3})`);
+                gradient.addColorStop(1, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0)`);
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            isDead() {
+                return this.life <= 0 || this.alpha <= 0;
+            }
+        }
+
+        const particles = [];
+        let emitterX = canvas.width / 2;
+        let emitterY = canvas.height * 0.8;
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        function animate() {
+            // Update emitter position
+            emitterX = canvas.width / 2;
+            emitterY = canvas.height * 0.8;
+
+            // Create slight fade effect for trailing smoke
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Emit new smoke particles
+            for (let i = 0; i < 2; i++) {
+                const offsetX = (Math.random() - 0.5) * 30;
+                particles.push(new SmokeParticle(emitterX + offsetX, emitterY));
+            }
+
+            // Update and draw particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+
+                if (particles[i].isDead()) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

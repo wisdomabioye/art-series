@@ -5,7 +5,7 @@
   "scripts": {
     "new": "node scripts/create-new.js",
     "manifest": "node scripts/generate-manifest.js",
-    "serve": "python -m http.server 8000",
+    "serve": "python3 -m http.server 8000",
     "start": "npm run manifest && npm run serve"
   },
   "keywords": [

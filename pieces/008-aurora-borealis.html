@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #008 - aurora-borealis">
+    <meta name="created" content="2025-11-01">
+    <title>aurora-borealis | Art Series #008</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #001a33 0%, #000d1a 50%, #000000 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #008
+         * Title: aurora-borealis
+         * Author: @wisdomabioye
+         * Created: 2025-11-01
+         * Description: Aurora Borealis with flowing wave curtains and color gradients
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        let time = 0;
+        const numWaves = 5;
+        const pointsPerWave = 100;
+
+        // Simple noise function
+        function noise(x, y) {
+            const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+            return n - Math.floor(n);
+        }
+
+        // Smooth noise
+        function smoothNoise(x, y) {
+            const corners = (noise(x - 1, y - 1) + noise(x + 1, y - 1) +
+                           noise(x - 1, y + 1) + noise(x + 1, y + 1)) / 16;
+            const sides = (noise(x - 1, y) + noise(x + 1, y) +
+                         noise(x, y - 1) + noise(x, y + 1)) / 8;
+            const center = noise(x, y) / 4;
+            return corners + sides + center;
+        }
+
+        // Aurora wave class
+        class AuroraWave {
+            constructor(index) {
+                this.index = index;
+                this.yBase = canvas.height * 0.15 + (index * canvas.height * 0.12);
+                this.amplitude = 80 + Math.random() * 60;
+                this.frequency = 0.003 + Math.random() * 0.002;
+                this.speed = 0.01 + Math.random() * 0.02;
+                this.offset = Math.random() * Math.PI * 2;
+
+                // Color variation for different waves
+                this.colorHue = 120 + (index * 30) % 100; // Green to purple range
+                this.alpha = 0.15 + Math.random() * 0.2;
+            }
+
+            getY(x, time) {
+                const wave1 = Math.sin(x * this.frequency + time * this.speed + this.offset);
+                const wave2 = Math.sin(x * this.frequency * 1.5 + time * this.speed * 0.7);
+                const wave3 = Math.sin(x * this.frequency * 0.5 + time * this.speed * 1.3);
+
+                const noise1 = smoothNoise(x * 0.01 + time * 0.1, this.index);
+                const noise2 = smoothNoise(x * 0.005 + time * 0.05, this.index + 10);
+
+                return this.yBase +
+                       (wave1 * this.amplitude * 0.5) +
+                       (wave2 * this.amplitude * 0.3) +
+                       (wave3 * this.amplitude * 0.2) +
+                       (noise1 * 30) +
+                       (noise2 * 20);
+            }
+
+            draw(time) {
+                const points = [];
+
+                // Generate wave points
+                for (let i = 0; i <= pointsPerWave; i++) {
+                    const x = (i / pointsPerWave) * canvas.width;
+                    const y = this.getY(x, time);
+                    points.push({ x, y });
+                }
+
+                // Draw wave with vertical gradient
+                ctx.save();
+
+                // Create gradient from top to bottom
+                const gradient = ctx.createLinearGradient(0, this.yBase - this.amplitude, 0, this.yBase + this.amplitude * 2);
+
+                // Aurora colors
+                if (this.index % 3 === 0) {
+                    // Green aurora
+                    gradient.addColorStop(0, `hsla(120, 80%, 60%, ${this.alpha})`);
+                    gradient.addColorStop(0.5, `hsla(140, 70%, 50%, ${this.alpha * 0.8})`);
+                    gradient.addColorStop(1, `hsla(160, 60%, 40%, 0)`);
+                } else if (this.index % 3 === 1) {
+                    // Blue-green aurora
+                    gradient.addColorStop(0, `hsla(180, 70%, 60%, ${this.alpha})`);
+                    gradient.addColorStop(0.5, `hsla(160, 80%, 50%, ${this.alpha * 0.8})`);
+                    gradient.addColorStop(1, `hsla(140, 70%, 40%, 0)`);
+                } else {
+                    // Purple-blue aurora
+                    gradient.addColorStop(0, `hsla(260, 60%, 60%, ${this.alpha})`);
+                    gradient.addColorStop(0.5, `hsla(240, 70%, 50%, ${this.alpha * 0.8})`);
+                    gradient.addColorStop(1, `hsla(220, 60%, 40%, 0)`);
+                }
+
+                ctx.fillStyle = gradient;
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 2;
+
+                // Draw the wave curtain
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+
+                for (let i = 1; i < points.length; i++) {
+                    ctx.lineTo(points[i].x, points[i].y);
+                }
+
+                // Complete the curtain
+                ctx.lineTo(canvas.width, canvas.height);
+                ctx.lineTo(0, canvas.height);
+                ctx.closePath();
+
+                // Add glow effect
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = `hsla(${this.colorHue}, 70%, 60%, ${this.alpha * 2})`;
+                ctx.fill();
+
+                // Draw bright top edge
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+                for (let i = 1; i < points.length; i++) {
+                    ctx.lineTo(points[i].x, points[i].y);
+                }
+                ctx.shadowBlur = 20;
+                ctx.stroke();
+
+                ctx.restore();
+            }
+        }
+
+        // Create aurora waves
+        const waves = [];
+        for (let i = 0; i < numWaves; i++) {
+            waves.push(new AuroraWave(i));
+        }
+
+        // Draw stars in background
+        function drawStars() {
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < 200; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height * 0.6;
+                const size = Math.random() * 1.5;
+                const alpha = Math.random() * 0.8 + 0.2;
+
+                ctx.globalAlpha = alpha;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        }
+
+
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+        
+        // Static stars drawn once
+        let starsDrawn = false;
+
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = 'rgba(0, 13, 26, 1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw stars once
+            if (!starsDrawn) {
+                drawStars();
+                starsDrawn = true;
+            } else {
+                // Redraw stars each frame
+                ctx.save();
+                ctx.globalAlpha = 0.8;
+                drawStars();
+                ctx.restore();
+            }
+
+            // Update time
+            time += 1;
+
+            // Draw aurora waves from back to front
+            for (let i = waves.length - 1; i >= 0; i--) {
+                waves[i].draw(time);
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
