@@ -1,6 +1,6 @@
 {
-  "generated": "2025-11-20T11:32:56.172Z",
-  "count": 40,
+  "generated": "2025-11-21T19:46:29.043Z",
+  "count": 52,
   "pieces": [
     {
       "filename": "001-cosmic-waves.html",
@@ -251,7 +251,7 @@
       "number": "028",
       "title": "sierpinski-triangle",
       "author": "@wisdomabioye",
-      "created": "2025-11-20",
+      "created": "2025-11-21",
       "description": "Animated Sierpinski triangle fractal with color gradients and recursive depth animation"
     },
     {
@@ -260,7 +260,7 @@
       "number": "029",
       "title": "fractal-trees-growing",
       "author": "@wisdomabioye",
-      "created": "2025-11-20",
+      "created": "2025-11-22",
       "description": "Organic fractal trees growing with seasonal colors and gentle wind animation"
     },
     {
@@ -269,7 +269,7 @@
       "number": "030",
       "title": "voronoi-diagram",
       "author": "@wisdomabioye",
-      "created": "2025-11-20",
+      "created": "2025-11-23",
       "description": "Animated Voronoi diagram with moving seed points and dynamic color gradients"
     },
     {
@@ -278,7 +278,7 @@
       "number": "031",
       "title": "delaunay-triangulation",
       "author": "@wisdomabioye",
-      "created": "2025-11-20",
+      "created": "2025-11-24",
       "description": "Animated Delaunay triangulation with moving points and colorful triangular mesh"
     },
     {
@@ -287,7 +287,7 @@
       "number": "032",
       "title": "spirograph-patterns",
       "author": "@wisdomabioye",
-      "created": "2025-11-20",
+      "created": "2025-11-25",
       "description": "Animated spirograph patterns with parametric equations and rainbow colors"
     },
     {
@@ -296,7 +296,7 @@
       "number": "033",
       "title": "mandala-generator",
       "author": "@wisdomabioye",
-      "created": "2025-11-20",
+      "created": "2025-11-26",
       "description": "Animated mandala with radial symmetry, rotating geometric patterns, and gradient colors"
     },
     {
@@ -305,7 +305,7 @@
       "number": "034",
       "title": "hexagonal-grid-waves",
       "author": "@wisdomabioye",
-      "created": "2025-11-20",
+      "created": "2025-11-27",
       "description": "Animated hexagonal grid with wave patterns, color gradients, and ripple effects"
     },
     {
@@ -314,7 +314,7 @@
       "number": "035",
       "title": "penrose-tiling",
       "author": "@wisdomabioye",
-      "created": "2025-11-20",
+      "created": "2025-11-28",
       "description": "Animated Penrose tiling with kites and darts, aperiodic pattern with color gradients"
     },
     {
@@ -323,7 +323,7 @@
       "number": "036",
       "title": "sacred-geometry",
       "author": "@wisdomabioye",
-      "created": "2025-11-20",
+      "created": "2025-11-29",
       "description": "Animated sacred geometry with Flower of Life and Metatron's Cube patterns"
     },
     {
@@ -332,7 +332,7 @@
       "number": "037",
       "title": "tessellations-morphing",
       "author": "@wisdomabioye",
-      "created": "2025-11-20",
+      "created": "2025-11-30",
       "description": "Morphing tessellations that smoothly transition between square, triangle, and hexagon patterns"
     },
     {
@@ -341,7 +341,7 @@
       "number": "038",
       "title": "polygon-tunnels",
       "author": "@wisdomabioye",
-      "created": "2025-11-20",
+      "created": "2025-12-01",
       "description": "Animated 3D polygon tunnel with rotating shapes and infinite depth effect"
     },
     {
@@ -350,7 +350,7 @@
       "number": "039",
       "title": "kaleidoscope-effects",
       "author": "@wisdomabioye",
-      "created": "2025-11-20",
+      "created": "2025-12-02",
       "description": "Animated kaleidoscope with radial symmetry, flowing particles, and rainbow colors"
     },
     {
@@ -359,8 +359,116 @@
       "number": "040",
       "title": "op-art-illusions",
       "author": "@wisdomabioye",
-      "created": "2025-11-20",
+      "created": "2025-12-03",
       "description": "Animated Op Art with concentric circles, moiré patterns, and wave distortion illusions"
+    },
+    {
+      "filename": "041-growing-vines-plants.html",
+      "path": "pieces/041-growing-vines-plants.html",
+      "number": "041",
+      "title": "growing-vines-plants",
+      "author": "@wisdomabioye",
+      "created": "2025-12-04",
+      "description": "Organic vines growing upward with branches, leaves, curly tendrils, and flowers"
+    },
+    {
+      "filename": "042-blooming-flowers.html",
+      "path": "pieces/042-blooming-flowers.html",
+      "number": "042",
+      "title": "blooming-flowers",
+      "author": "@wisdomabioye",
+      "created": "2025-12-05",
+      "description": "Beautiful flowers blooming with petals unfurling, swaying gently in the breeze"
+    },
+    {
+      "filename": "043-tree-rings-forming.html",
+      "path": "pieces/043-tree-rings-forming.html",
+      "number": "042",
+      "title": "tree-rings-forming",
+      "author": "@wisdomabioye",
+      "created": "2025-12-06",
+      "description": "Cross-section view of tree rings forming over time with organic texture and growth patterns"
+    },
+    {
+      "filename": "044-coral-reef-growth.html",
+      "path": "pieces/044-coral-reef-growth.html",
+      "number": "044",
+      "title": "coral-reef-growth",
+      "author": "@wisdomabioye",
+      "created": "2025-12-07",
+      "description": "Underwater coral reef ecosystem with branching corals, sea fans, and floating particles"
+    },
+    {
+      "filename": "045-crystallization.html",
+      "path": "pieces/045-crystallization.html",
+      "number": "045",
+      "title": "crystallization",
+      "author": "@wisdomabioye",
+      "created": "2025-12-08",
+      "description": "Crystals forming and growing with faceted surfaces, light refraction, and shimmer effects"
+    },
+    {
+      "filename": "046-snowflakes-falling.html",
+      "path": "pieces/046-snowflakes-falling.html",
+      "number": "046",
+      "title": "snowflakes-falling",
+      "author": "@wisdomabioye",
+      "created": "2025-12-09",
+      "description": "Detailed crystalline snowflakes gently falling with rotation and wind drift"
+    },
+    {
+      "filename": "047-rain-on-window.html",
+      "path": "pieces/047-rain-on-window.html",
+      "number": "047",
+      "title": "rain-on-window",
+      "author": "@wisdomabioye",
+      "created": "2025-12-10",
+      "description": "Realistic rain droplets sliding down a window with trails, merging, and blurred city lights behind"
+    },
+    {
+      "filename": "048-lightning-strikes.html",
+      "path": "pieces/048-lightning-strikes.html",
+      "number": "048",
+      "title": "lightning-strikes",
+      "author": "@wisdomabioye",
+      "created": "2025-12-11",
+      "description": "Dramatic lightning bolts striking with branching forks, flash illumination, and storm clouds"
+    },
+    {
+      "filename": "049-tornados-spiral-vortex.html",
+      "path": "pieces/049-tornados-spiral-vortex.html",
+      "number": "049",
+      "title": "tornados-spiral-vortex",
+      "author": "@wisdomabioye",
+      "created": "2025-12-12",
+      "description": "Spinning tornado vortex with swirling debris particles, dust clouds, and dramatic storm sky"
+    },
+    {
+      "filename": "050-cell-division.html",
+      "path": "pieces/050-cell-division.html",
+      "number": "050",
+      "title": "cell-division",
+      "author": "@wisdomabioye",
+      "created": "2025-12-13",
+      "description": "Biological cell division (mitosis) animation with nucleus, chromosomes, and membrane splitting"
+    },
+    {
+      "filename": "051-root-systems.html",
+      "path": "pieces/051-root-systems.html",
+      "number": "051",
+      "title": "root-systems",
+      "author": "@wisdomabioye",
+      "created": "2025-12-14",
+      "description": "Underground root network growing downward with branching tendrils, root hairs, and soil particles"
+    },
+    {
+      "filename": "052-mushroom-spores.html",
+      "path": "pieces/052-mushroom-spores.html",
+      "number": "052",
+      "title": "mushroom-spores",
+      "author": "@wisdomabioye",
+      "created": "2025-12-15",
+      "description": "Bioluminescent mushrooms releasing glowing spores that float upward in a dark forest scene"
     }
   ]
 }

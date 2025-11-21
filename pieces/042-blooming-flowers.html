@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #042 - blooming-flowers">
+    <meta name="created" content="2025-12-05">
+    <title>blooming-flowers | Art Series #042</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #042
+         * Title: blooming-flowers
+         * Author: @wisdomabioye
+         * Created: 2025-12-05
+         * Description: Beautiful flowers blooming with petals unfurling, swaying gently in the breeze
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        const flowerPalettes = [
+            { petals: ['#FF6B9D', '#FF8FB1', '#FFB3C6'], center: '#FFD700' }, // Pink
+            { petals: ['#9B59B6', '#A569BD', '#BB8FCE'], center: '#F4D03F' }, // Purple
+            { petals: ['#E74C3C', '#EC7063', '#F1948A'], center: '#F39C12' }, // Red
+            { petals: ['#F39C12', '#F5B041', '#F8C471'], center: '#8B4513' }, // Orange
+            { petals: ['#3498DB', '#5DADE2', '#85C1E9'], center: '#F1C40F' }, // Blue
+            { petals: ['#FFFFFF', '#F8F9F9', '#E5E8E8'], center: '#F4D03F' }, // White
+            { petals: ['#E91E63', '#F06292', '#F48FB1'], center: '#FFC107' }, // Magenta
+        ];
+
+        let flowers = [];
+        let time = 0;
+
+        class Flower {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.palette = flowerPalettes[Math.floor(Math.random() * flowerPalettes.length)];
+                this.petalCount = 5 + Math.floor(Math.random() * 4); // 5-8 petals
+                this.maxPetalSize = 30 + Math.random() * 40;
+                this.centerSize = this.maxPetalSize * 0.25;
+                this.bloom = 0; // 0 to 1
+                this.bloomSpeed = 0.005 + Math.random() * 0.008;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.002;
+                this.swayOffset = Math.random() * Math.PI * 2;
+                this.swayAmount = 0.03 + Math.random() * 0.03;
+                this.stemHeight = 80 + Math.random() * 120;
+                this.stemCurve = (Math.random() - 0.5) * 30;
+                this.hasLeaves = Math.random() > 0.3;
+                this.petalLayers = 1 + Math.floor(Math.random() * 2); // 1-2 layers
+                this.done = false;
+            }
+
+            update() {
+                if (this.bloom < 1) {
+                    this.bloom += this.bloomSpeed;
+                    if (this.bloom >= 1) {
+                        this.bloom = 1;
+                        this.done = true;
+                    }
+                }
+                this.rotation += this.rotationSpeed;
+            }
+
+            draw() {
+                const sway = Math.sin(time * 1.5 + this.swayOffset) * this.swayAmount;
+
+                // Draw stem
+                this.drawStem(sway);
+
+                // Draw flower head
+                ctx.save();
+                ctx.translate(this.x + Math.sin(sway) * 10, this.y - this.stemHeight * this.bloom);
+                ctx.rotate(sway * 0.5);
+
+                // Draw petal layers (back to front)
+                for (let layer = this.petalLayers - 1; layer >= 0; layer--) {
+                    const layerScale = 1 - layer * 0.3;
+                    const layerRotation = layer * 0.2;
+                    this.drawPetals(layerScale, layerRotation);
+                }
+
+                // Draw center
+                this.drawCenter();
+
+                ctx.restore();
+            }
+
+            drawStem(sway) {
+                const bloomProgress = Math.min(1, this.bloom * 1.5); // Stem grows faster
+                const stemEndY = this.y - this.stemHeight * bloomProgress;
+
+                ctx.strokeStyle = '#228B22';
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+
+                // Curved stem with sway
+                const cp1x = this.x + this.stemCurve + Math.sin(sway) * 5;
+                const cp1y = this.y - this.stemHeight * 0.5 * bloomProgress;
+                const endX = this.x + Math.sin(sway) * 10;
+
+                ctx.quadraticCurveTo(cp1x, cp1y, endX, stemEndY);
+                ctx.stroke();
+
+                // Draw leaves
+                if (this.hasLeaves && bloomProgress > 0.4) {
+                    const leafProgress = Math.min(1, (bloomProgress - 0.4) / 0.3);
+                    this.drawLeaf(
+                        this.x + this.stemCurve * 0.3,
+                        this.y - this.stemHeight * 0.35,
+                        -0.5 + sway,
+                        leafProgress
+                    );
+                    this.drawLeaf(
+                        this.x + this.stemCurve * 0.6,
+                        this.y - this.stemHeight * 0.55,
+                        0.5 + sway,
+                        leafProgress
+                    );
+                }
+            }
+
+            drawLeaf(x, y, angle, progress) {
+                const leafSize = 20 * progress;
+
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(angle);
+
+                ctx.fillStyle = '#32CD32';
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(leafSize * 0.5, -leafSize * 0.4, leafSize, 0);
+                ctx.quadraticCurveTo(leafSize * 0.5, leafSize * 0.4, 0, 0);
+                ctx.fill();
+
+                // Leaf vein
+                ctx.strokeStyle = '#228B22';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(2, 0);
+                ctx.lineTo(leafSize * 0.7, 0);
+                ctx.stroke();
+
+                ctx.restore();
+            }
+
+            drawPetals(scale, rotationOffset) {
+                const petalSize = this.maxPetalSize * this.bloom * scale;
+                const petalWidth = petalSize * 0.4;
+
+                for (let i = 0; i < this.petalCount; i++) {
+                    const angle = (i / this.petalCount) * Math.PI * 2 + this.rotation + rotationOffset;
+                    const colorIndex = i % this.palette.petals.length;
+
+                    // Petal unfurling animation
+                    const unfurlProgress = Math.min(1, this.bloom * 1.5);
+                    const petalAngle = angle + (1 - unfurlProgress) * 0.5;
+
+                    ctx.save();
+                    ctx.rotate(petalAngle);
+
+                    // Gradient for petal
+                    const gradient = ctx.createRadialGradient(
+                        petalSize * 0.5, 0, 0,
+                        petalSize * 0.5, 0, petalSize
+                    );
+                    gradient.addColorStop(0, this.palette.petals[colorIndex]);
+                    gradient.addColorStop(1, this.palette.petals[(colorIndex + 1) % this.palette.petals.length]);
+
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+
+                    // Petal shape - elongated with rounded tip
+                    ctx.moveTo(0, 0);
+                    ctx.bezierCurveTo(
+                        petalSize * 0.2, -petalWidth,
+                        petalSize * 0.8, -petalWidth * 0.8,
+                        petalSize, 0
+                    );
+                    ctx.bezierCurveTo(
+                        petalSize * 0.8, petalWidth * 0.8,
+                        petalSize * 0.2, petalWidth,
+                        0, 0
+                    );
+                    ctx.fill();
+
+                    // Petal vein
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(5, 0);
+                    ctx.lineTo(petalSize * 0.7, 0);
+                    ctx.stroke();
+
+                    ctx.restore();
+                }
+            }
+
+            drawCenter() {
+                const centerRadius = this.centerSize * this.bloom;
+
+                // Outer ring
+                const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, centerRadius);
+                gradient.addColorStop(0, this.palette.center);
+                gradient.addColorStop(0.7, this.palette.center);
+                gradient.addColorStop(1, '#8B6914');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(0, 0, centerRadius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Texture dots (stamens)
+                if (this.bloom > 0.5) {
+                    const dotCount = 8 + Math.floor(Math.random() * 5);
+                    ctx.fillStyle = '#8B4513';
+                    for (let i = 0; i < dotCount; i++) {
+                        const angle = (i / dotCount) * Math.PI * 2;
+                        const dist = centerRadius * 0.5;
+                        const dotX = Math.cos(angle) * dist;
+                        const dotY = Math.sin(angle) * dist;
+                        ctx.beginPath();
+                        ctx.arc(dotX, dotY, 1.5 * this.bloom, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+        }
+
+        function initFlowers() {
+            flowers = [];
+            const count = 8 + Math.floor(Math.random() * 6);
+
+            for (let i = 0; i < count; i++) {
+                const x = 80 + Math.random() * (canvas.width - 160);
+                const y = canvas.height - 20 - Math.random() * 40;
+
+                // Stagger bloom times
+                const flower = new Flower(x, y);
+                flower.bloom = -i * 0.1; // Negative bloom creates delay
+                flowers.push(flower);
+            }
+        }
+
+        initFlowers();
+        let resetTimer = 0;
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Dark gradient background
+            const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            bgGradient.addColorStop(0, '#0a0a15');
+            bgGradient.addColorStop(1, '#1a1a2e');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Ground
+            ctx.fillStyle = '#1a3d1a';
+            ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+
+            // Update and draw flowers
+            let allDone = true;
+            flowers.forEach(flower => {
+                flower.update();
+                if (flower.bloom > 0) {
+                    flower.draw();
+                }
+                if (!flower.done) allDone = false;
+            });
+
+            // Reset after delay
+            if (allDone) {
+                resetTimer++;
+                if (resetTimer > 400) {
+                    resetTimer = 0;
+                    initFlowers();
+                }
+            }
+
+            time += 0.02;
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initFlowers();
+        });
+    </script>
+</body>
+</html>

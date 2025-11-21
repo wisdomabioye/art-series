@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #051 - root-systems">
+    <meta name="created" content="2025-12-14">
+    <title>root-systems | Art Series #051</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #051
+         * Title: root-systems
+         * Author: @wisdomabioye
+         * Created: 2025-12-14
+         * Description: Underground root network growing downward with branching tendrils, root hairs, and soil particles
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        let roots = [];
+        let soilParticles = [];
+        let time = 0;
+
+        const rootColors = {
+            main: ['#8B6914', '#A0722D', '#6B4F1D'],
+            tips: ['#C4A86C', '#D4BC84', '#E8D9B0'],
+            hairs: ['#BFA876', '#CFBD91', '#DFD2AC']
+        };
+
+        class Root {
+            constructor(x, y, angle, thickness, depth = 0, maxDepth = 6) {
+                this.x = x;
+                this.y = y;
+                this.angle = angle;
+                this.thickness = thickness;
+                this.depth = depth;
+                this.maxDepth = maxDepth;
+                this.segments = [{ x, y }];
+                this.length = 0;
+                this.maxLength = (80 + Math.random() * 120) * (1 - depth * 0.12);
+                this.speed = 0.8 + Math.random() * 0.4;
+                this.done = false;
+                this.children = [];
+                this.rootHairs = [];
+                this.wobbleOffset = Math.random() * Math.PI * 2;
+                this.branchChance = 0.015 - depth * 0.002;
+                this.lastBranchLength = 0;
+            }
+
+            grow() {
+                if (this.done) {
+                    this.children.forEach(child => child.grow());
+                    return;
+                }
+
+                const last = this.segments[this.segments.length - 1];
+
+                // Organic wobble
+                const wobble = Math.sin(time * 2 + this.wobbleOffset) * 0.03;
+                this.angle += wobble;
+
+                // Tendency to grow downward
+                const downwardPull = 0.02 * (1 - this.depth * 0.1);
+                this.angle += (Math.PI / 2 - this.angle) * downwardPull;
+
+                // Slight random wandering
+                this.angle += (Math.random() - 0.5) * 0.1;
+
+                const newX = last.x + Math.cos(this.angle) * this.speed;
+                const newY = last.y + Math.sin(this.angle) * this.speed;
+
+                this.segments.push({ x: newX, y: newY });
+                this.length += this.speed;
+
+                // Add root hairs on main and secondary roots
+                if (this.depth < 3 && this.length > 20 && Math.random() < 0.08) {
+                    this.rootHairs.push({
+                        x: newX,
+                        y: newY,
+                        angle: this.angle + (Math.random() > 0.5 ? 1 : -1) * (0.8 + Math.random() * 0.5),
+                        length: 5 + Math.random() * 15,
+                        thickness: 0.5
+                    });
+                }
+
+                // Branch into smaller roots
+                if (this.depth < this.maxDepth &&
+                    this.length > 30 &&
+                    this.length - this.lastBranchLength > 25 &&
+                    Math.random() < this.branchChance) {
+
+                    const branchAngle = this.angle + (Math.random() > 0.5 ? 1 : -1) * (0.4 + Math.random() * 0.6);
+                    const branchThickness = this.thickness * (0.5 + Math.random() * 0.2);
+
+                    const child = new Root(
+                        newX, newY,
+                        branchAngle,
+                        branchThickness,
+                        this.depth + 1,
+                        this.maxDepth
+                    );
+                    this.children.push(child);
+                    this.lastBranchLength = this.length;
+                }
+
+                // Check if done
+                if (this.length >= this.maxLength ||
+                    newY > canvas.height - 20 ||
+                    newX < 20 || newX > canvas.width - 20) {
+                    this.done = true;
+                }
+
+                // Grow children
+                this.children.forEach(child => child.grow());
+            }
+
+            draw() {
+                // Draw main root
+                if (this.segments.length > 1) {
+                    const colorIndex = Math.min(this.depth, rootColors.main.length - 1);
+
+                    // Thickness tapers toward tip
+                    for (let i = 1; i < this.segments.length; i++) {
+                        const t = i / this.segments.length;
+                        const thickness = this.thickness * (1 - t * 0.6);
+
+                        ctx.strokeStyle = rootColors.main[colorIndex];
+                        ctx.lineWidth = thickness;
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+
+                        ctx.beginPath();
+                        ctx.moveTo(this.segments[i - 1].x, this.segments[i - 1].y);
+                        ctx.lineTo(this.segments[i].x, this.segments[i].y);
+                        ctx.stroke();
+                    }
+
+                    // Root tip (lighter color)
+                    if (!this.done || this.segments.length > 2) {
+                        const tip = this.segments[this.segments.length - 1];
+                        const tipColor = rootColors.tips[Math.min(this.depth, rootColors.tips.length - 1)];
+
+                        ctx.fillStyle = tipColor;
+                        ctx.beginPath();
+                        ctx.arc(tip.x, tip.y, this.thickness * 0.4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+
+                // Draw root hairs
+                this.rootHairs.forEach(hair => {
+                    ctx.strokeStyle = rootColors.hairs[0] + '80';
+                    ctx.lineWidth = hair.thickness;
+                    ctx.beginPath();
+                    ctx.moveTo(hair.x, hair.y);
+                    ctx.lineTo(
+                        hair.x + Math.cos(hair.angle) * hair.length,
+                        hair.y + Math.sin(hair.angle) * hair.length
+                    );
+                    ctx.stroke();
+                });
+
+                // Draw children
+                this.children.forEach(child => child.draw());
+            }
+        }
+
+        class SoilParticle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = 80 + Math.random() * (canvas.height - 100);
+                this.size = 1 + Math.random() * 3;
+                this.color = this.randomSoilColor();
+            }
+
+            randomSoilColor() {
+                const colors = ['#3D2817', '#4A3520', '#5C4332', '#6B5344', '#483C32'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            roots = [];
+            soilParticles = [];
+
+            // Create main roots from plant base
+            const plantX = canvas.width / 2;
+            const plantY = 70;
+            const rootCount = 4 + Math.floor(Math.random() * 3);
+
+            for (let i = 0; i < rootCount; i++) {
+                const angle = Math.PI / 2 + (i - (rootCount - 1) / 2) * 0.4 + (Math.random() - 0.5) * 0.2;
+                const thickness = 4 + Math.random() * 3;
+                roots.push(new Root(
+                    plantX + (i - (rootCount - 1) / 2) * 15,
+                    plantY,
+                    angle,
+                    thickness,
+                    0,
+                    5 + Math.floor(Math.random() * 2)
+                ));
+            }
+
+            // Create soil particles
+            for (let i = 0; i < 200; i++) {
+                soilParticles.push(new SoilParticle());
+            }
+        }
+
+        init();
+        let resetTimer = 0;
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Soil gradient background
+            const soilGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            soilGradient.addColorStop(0, '#87CEEB'); // Sky
+            soilGradient.addColorStop(0.08, '#4A7C59'); // Grass
+            soilGradient.addColorStop(0.1, '#3D2817'); // Topsoil
+            soilGradient.addColorStop(0.3, '#4A3520'); // Dark soil
+            soilGradient.addColorStop(0.6, '#5C4332'); // Clay
+            soilGradient.addColorStop(1, '#6B5344'); // Deep soil
+            ctx.fillStyle = soilGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Ground line
+            ctx.fillStyle = '#2D5016';
+            ctx.fillRect(0, canvas.height * 0.07, canvas.width, canvas.height * 0.03);
+
+            // Draw soil particles
+            soilParticles.forEach(p => p.draw());
+
+            // Simple plant above ground
+            const plantX = canvas.width / 2;
+            ctx.strokeStyle = '#228B22';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(plantX, canvas.height * 0.08);
+            ctx.lineTo(plantX, canvas.height * 0.08 - 40);
+            ctx.stroke();
+
+            // Leaves
+            ctx.fillStyle = '#32CD32';
+            for (let i = 0; i < 3; i++) {
+                const leafY = canvas.height * 0.08 - 20 - i * 15;
+                const dir = i % 2 === 0 ? 1 : -1;
+                ctx.beginPath();
+                ctx.ellipse(plantX + dir * 15, leafY, 20, 8, dir * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Grow and draw roots
+            let allDone = true;
+            roots.forEach(root => {
+                root.grow();
+                root.draw();
+                if (!root.done) allDone = false;
+                root.children.forEach(function checkChildren(child) {
+                    if (!child.done) allDone = false;
+                    child.children.forEach(checkChildren);
+                });
+            });
+
+            // Reset after all done
+            if (allDone) {
+                resetTimer++;
+                if (resetTimer > 300) {
+                    resetTimer = 0;
+                    init();
+                }
+            }
+
+            time += 0.02;
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        });
+    </script>
+</body>
+</html>

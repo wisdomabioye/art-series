@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #050 - cell-division">
+    <meta name="created" content="2025-12-13">
+    <title>cell-division | Art Series #050</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #050
+         * Title: cell-division
+         * Author: @wisdomabioye
+         * Created: 2025-12-13
+         * Description: Biological cell division (mitosis) animation with nucleus, chromosomes, and membrane splitting
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        let cells = [];
+        let time = 0;
+        const maxCells = 32;
+
+        const cellColors = [
+            { membrane: '#4CAF50', cytoplasm: '#81C784', nucleus: '#2E7D32' },
+            { membrane: '#2196F3', cytoplasm: '#64B5F6', nucleus: '#1565C0' },
+            { membrane: '#9C27B0', cytoplasm: '#BA68C8', nucleus: '#6A1B9A' },
+            { membrane: '#FF9800', cytoplasm: '#FFB74D', nucleus: '#E65100' },
+            { membrane: '#E91E63', cytoplasm: '#F06292', nucleus: '#AD1457' },
+        ];
+
+        class Cell {
+            constructor(x, y, radius, colorScheme = null) {
+                this.x = x;
+                this.y = y;
+                this.radius = radius;
+                this.targetRadius = radius;
+                this.colors = colorScheme || cellColors[Math.floor(Math.random() * cellColors.length)];
+
+                // Division state
+                this.divisionProgress = 0;
+                this.isDividing = false;
+                this.divisionAngle = Math.random() * Math.PI * 2;
+
+                // Organelles
+                this.nucleusRadius = radius * 0.3;
+                this.organelles = this.generateOrganelles();
+
+                // Movement
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+
+                // Wobble
+                this.wobbleOffset = Math.random() * Math.PI * 2;
+                this.wobbleSpeed = 0.02 + Math.random() * 0.02;
+
+                // Division timing
+                this.divisionTimer = 200 + Math.random() * 300;
+            }
+
+            generateOrganelles() {
+                const organelles = [];
+                const count = 5 + Math.floor(Math.random() * 5);
+
+                for (let i = 0; i < count; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = Math.random() * (this.radius * 0.5);
+                    organelles.push({
+                        angle,
+                        dist,
+                        size: 2 + Math.random() * 4,
+                        type: Math.random() > 0.5 ? 'mitochondria' : 'ribosome'
+                    });
+                }
+                return organelles;
+            }
+
+            update() {
+                // Movement
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Boundary bounce
+                if (this.x < this.radius || this.x > canvas.width - this.radius) {
+                    this.vx *= -1;
+                    this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+                }
+                if (this.y < this.radius || this.y > canvas.height - this.radius) {
+                    this.vy *= -1;
+                    this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+                }
+
+                // Division logic
+                if (!this.isDividing) {
+                    this.divisionTimer--;
+                    if (this.divisionTimer <= 0 && cells.length < maxCells) {
+                        this.isDividing = true;
+                        this.divisionProgress = 0;
+                    }
+                } else {
+                    this.divisionProgress += 0.005;
+
+                    if (this.divisionProgress >= 1) {
+                        return this.completeDivision();
+                    }
+                }
+
+                return null;
+            }
+
+            completeDivision() {
+                const offsetX = Math.cos(this.divisionAngle) * this.radius * 0.8;
+                const offsetY = Math.sin(this.divisionAngle) * this.radius * 0.8;
+
+                const newRadius = this.radius * 0.85;
+
+                // Create daughter cell
+                const daughter = new Cell(
+                    this.x + offsetX,
+                    this.y + offsetY,
+                    newRadius,
+                    this.colors
+                );
+                daughter.vx = Math.cos(this.divisionAngle) * 0.5;
+                daughter.vy = Math.sin(this.divisionAngle) * 0.5;
+
+                // Update this cell
+                this.x -= offsetX * 0.5;
+                this.y -= offsetY * 0.5;
+                this.radius = newRadius;
+                this.nucleusRadius = newRadius * 0.3;
+                this.isDividing = false;
+                this.divisionProgress = 0;
+                this.divisionTimer = 300 + Math.random() * 400;
+                this.vx = -Math.cos(this.divisionAngle) * 0.5;
+                this.vy = -Math.sin(this.divisionAngle) * 0.5;
+                this.organelles = this.generateOrganelles();
+
+                return daughter;
+            }
+
+            draw() {
+                const wobble = Math.sin(time * this.wobbleSpeed + this.wobbleOffset) * 2;
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                if (this.isDividing) {
+                    this.drawDividingCell(wobble);
+                } else {
+                    this.drawNormalCell(wobble);
+                }
+
+                ctx.restore();
+            }
+
+            drawNormalCell(wobble) {
+                const r = this.radius + wobble;
+
+                // Cell membrane glow
+                ctx.shadowColor = this.colors.membrane;
+                ctx.shadowBlur = 15;
+
+                // Cytoplasm
+                const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+                gradient.addColorStop(0, this.colors.cytoplasm + 'CC');
+                gradient.addColorStop(0.7, this.colors.cytoplasm + '99');
+                gradient.addColorStop(1, this.colors.membrane + 'AA');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(0, 0, r, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Membrane
+                ctx.strokeStyle = this.colors.membrane;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+
+                // Organelles
+                this.drawOrganelles();
+
+                // Nucleus
+                this.drawNucleus(0, 0, this.nucleusRadius);
+            }
+
+            drawDividingCell(wobble) {
+                const progress = this.divisionProgress;
+                const r = this.radius + wobble;
+
+                // Pinching effect
+                const pinch = Math.sin(progress * Math.PI) * 0.5;
+                const separation = progress * r * 0.8;
+
+                ctx.rotate(this.divisionAngle);
+
+                // Draw two merging/splitting circles
+                ctx.shadowColor = this.colors.membrane;
+                ctx.shadowBlur = 15;
+
+                // Left half
+                const gradient1 = ctx.createRadialGradient(-separation * 0.5, 0, 0, -separation * 0.5, 0, r * (1 - pinch * 0.3));
+                gradient1.addColorStop(0, this.colors.cytoplasm + 'CC');
+                gradient1.addColorStop(0.7, this.colors.cytoplasm + '99');
+                gradient1.addColorStop(1, this.colors.membrane + 'AA');
+
+                ctx.fillStyle = gradient1;
+                ctx.beginPath();
+                ctx.ellipse(-separation * 0.5, 0, r * (1 - pinch * 0.3), r * (1 - pinch * 0.5), 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = this.colors.membrane;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Right half
+                const gradient2 = ctx.createRadialGradient(separation * 0.5, 0, 0, separation * 0.5, 0, r * (1 - pinch * 0.3));
+                gradient2.addColorStop(0, this.colors.cytoplasm + 'CC');
+                gradient2.addColorStop(0.7, this.colors.cytoplasm + '99');
+                gradient2.addColorStop(1, this.colors.membrane + 'AA');
+
+                ctx.fillStyle = gradient2;
+                ctx.beginPath();
+                ctx.ellipse(separation * 0.5, 0, r * (1 - pinch * 0.3), r * (1 - pinch * 0.5), 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+
+                // Dividing nuclei
+                const nucleusSep = separation * 0.6;
+                this.drawNucleus(-nucleusSep, 0, this.nucleusRadius * (0.7 + progress * 0.3));
+                this.drawNucleus(nucleusSep, 0, this.nucleusRadius * (0.7 + progress * 0.3));
+
+                // Spindle fibers during division
+                if (progress > 0.2 && progress < 0.8) {
+                    ctx.strokeStyle = this.colors.nucleus + '40';
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i < 8; i++) {
+                        const y = (i - 3.5) * 5;
+                        ctx.beginPath();
+                        ctx.moveTo(-nucleusSep, y);
+                        ctx.lineTo(nucleusSep, y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            drawNucleus(x, y, radius) {
+                // Nuclear envelope
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                gradient.addColorStop(0, this.colors.nucleus + 'DD');
+                gradient.addColorStop(0.8, this.colors.nucleus + 'AA');
+                gradient.addColorStop(1, this.colors.nucleus);
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Nucleolus
+                ctx.fillStyle = this.colors.nucleus;
+                ctx.beginPath();
+                ctx.arc(x + radius * 0.2, y - radius * 0.1, radius * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Chromatin texture
+                ctx.strokeStyle = this.colors.nucleus + '60';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.arc(
+                        x + (Math.random() - 0.5) * radius * 0.5,
+                        y + (Math.random() - 0.5) * radius * 0.5,
+                        radius * 0.2 + Math.random() * radius * 0.2,
+                        0, Math.PI * 1.5
+                    );
+                    ctx.stroke();
+                }
+            }
+
+            drawOrganelles() {
+                this.organelles.forEach(org => {
+                    const x = Math.cos(org.angle + time * 0.01) * org.dist;
+                    const y = Math.sin(org.angle + time * 0.01) * org.dist;
+
+                    if (org.type === 'mitochondria') {
+                        // Mitochondria - elongated
+                        ctx.fillStyle = '#FF6B6B88';
+                        ctx.beginPath();
+                        ctx.ellipse(x, y, org.size * 1.5, org.size * 0.7, org.angle, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else {
+                        // Ribosome - small dot
+                        ctx.fillStyle = '#FFD93D88';
+                        ctx.beginPath();
+                        ctx.arc(x, y, org.size * 0.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            }
+        }
+
+        function init() {
+            cells = [];
+            // Start with a few cells
+            for (let i = 0; i < 3; i++) {
+                cells.push(new Cell(
+                    200 + Math.random() * (canvas.width - 400),
+                    200 + Math.random() * (canvas.height - 400),
+                    40 + Math.random() * 20
+                ));
+            }
+        }
+
+        init();
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Dark microscope background
+            const gradient = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height / 2, 0,
+                canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height) * 0.7
+            );
+            gradient.addColorStop(0, '#0a1520');
+            gradient.addColorStop(1, '#000508');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw cells
+            const newCells = [];
+            cells.forEach(cell => {
+                const daughter = cell.update();
+                if (daughter) {
+                    newCells.push(daughter);
+                }
+                cell.draw();
+            });
+
+            // Add new daughter cells
+            cells.push(...newCells);
+
+            // Cell count display
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.font = '14px monospace';
+            ctx.fillText(`Cells: ${cells.length}`, 20, 30);
+
+            time += 0.02;
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        });
+    </script>
+</body>
+</html>

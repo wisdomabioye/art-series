@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #041 - growing-vines-plants">
+    <meta name="created" content="2025-12-04">
+    <title>growing-vines-plants | Art Series #041</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #041
+         * Title: growing-vines-plants
+         * Author: @wisdomabioye
+         * Created: 2025-12-04
+         * Description: Organic vines growing upward with branches, leaves, curly tendrils, and flowers
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        // Color palette - lush greens and natural tones
+        const colors = {
+            stems: ['#2D5016', '#3D6B22', '#4A7C23', '#1E3D0F'],
+            leaves: ['#228B22', '#32CD32', '#90EE90', '#7CFC00', '#ADFF2F'],
+            flowers: ['#FF69B4', '#FFB6C1', '#FF1493', '#DA70D6', '#BA55D3'],
+            tendrils: ['#556B2F', '#6B8E23', '#808000']
+        };
+
+        let vines = [];
+        let time = 0;
+
+        class Vine {
+            constructor(x, y, angle, isMain = true) {
+                this.segments = [{ x, y }];
+                this.angle = angle;
+                this.speed = 0.8 + Math.random() * 0.4;
+                this.length = 0;
+                this.maxLength = isMain ? 400 + Math.random() * 400 : 100 + Math.random() * 150;
+                this.thickness = isMain ? 5 : 2.5;
+                this.color = colors.stems[Math.floor(Math.random() * colors.stems.length)];
+                this.isMain = isMain;
+                this.branches = [];
+                this.leaves = [];
+                this.tendrils = [];
+                this.flowers = [];
+                this.done = false;
+                this.waveOffset = Math.random() * Math.PI * 2;
+                this.curviness = 0.02 + Math.random() * 0.03;
+            }
+
+            grow() {
+                if (this.done) return;
+
+                const last = this.segments[this.segments.length - 1];
+
+                // Organic wave motion
+                const wave = Math.sin(time * 2 + this.waveOffset) * this.curviness;
+                this.angle += wave;
+
+                // Slight tendency to grow upward
+                if (this.isMain) {
+                    this.angle += ((-Math.PI / 2) - this.angle) * 0.01;
+                }
+
+                const newX = last.x + Math.cos(this.angle) * this.speed;
+                const newY = last.y + Math.sin(this.angle) * this.speed;
+
+                this.segments.push({ x: newX, y: newY });
+                this.length += this.speed;
+
+                // Spawn branches
+                if (this.isMain && this.length > 30 && Math.random() < 0.02) {
+                    const branchAngle = this.angle + (Math.random() > 0.5 ? 1 : -1) * (0.3 + Math.random() * 0.5);
+                    this.branches.push(new Vine(last.x, last.y, branchAngle, false));
+                }
+
+                // Spawn leaves
+                if (this.length > 20 && Math.random() < 0.03) {
+                    this.leaves.push({
+                        x: last.x,
+                        y: last.y,
+                        size: 5 + Math.random() * 10,
+                        angle: this.angle + (Math.random() - 0.5) * 1.5,
+                        color: colors.leaves[Math.floor(Math.random() * colors.leaves.length)],
+                        growth: 0
+                    });
+                }
+
+                // Spawn curly tendrils
+                if (this.length > 40 && Math.random() < 0.015) {
+                    this.tendrils.push({
+                        x: last.x,
+                        y: last.y,
+                        angle: this.angle + (Math.random() > 0.5 ? 1 : -1) * 0.8,
+                        length: 0,
+                        maxLength: 15 + Math.random() * 20,
+                        curl: Math.random() > 0.5 ? 0.15 : -0.15,
+                        color: colors.tendrils[Math.floor(Math.random() * colors.tendrils.length)]
+                    });
+                }
+
+                // Spawn occasional flowers at branch tips
+                if (!this.isMain && this.length > this.maxLength * 0.8 && Math.random() < 0.05 && this.flowers.length < 1) {
+                    this.flowers.push({
+                        x: newX,
+                        y: newY,
+                        size: 0,
+                        maxSize: 6 + Math.random() * 6,
+                        color: colors.flowers[Math.floor(Math.random() * colors.flowers.length)],
+                        petals: 5 + Math.floor(Math.random() * 3)
+                    });
+                }
+
+                // Check if done
+                if (this.length >= this.maxLength || newY < 50 || newX < 0 || newX > canvas.width) {
+                    this.done = true;
+                }
+
+                // Grow branches
+                this.branches.forEach(branch => branch.grow());
+            }
+
+            draw() {
+                // Draw main vine stem
+                if (this.segments.length > 1) {
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = this.thickness;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.beginPath();
+                    ctx.moveTo(this.segments[0].x, this.segments[0].y);
+
+                    for (let i = 1; i < this.segments.length; i++) {
+                        ctx.lineTo(this.segments[i].x, this.segments[i].y);
+                    }
+                    ctx.stroke();
+                }
+
+                // Draw tendrils (curly spiral bits)
+                this.tendrils.forEach(t => {
+                    if (t.length < t.maxLength) {
+                        t.length += 0.5;
+                    }
+
+                    ctx.strokeStyle = t.color;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+
+                    let tx = t.x, ty = t.y, ta = t.angle;
+                    ctx.moveTo(tx, ty);
+
+                    for (let i = 0; i < t.length; i++) {
+                        ta += t.curl;
+                        tx += Math.cos(ta) * 2;
+                        ty += Math.sin(ta) * 2;
+                        ctx.lineTo(tx, ty);
+                    }
+                    ctx.stroke();
+                });
+
+                // Draw leaves
+                this.leaves.forEach(leaf => {
+                    if (leaf.growth < 1) leaf.growth += 0.02;
+
+                    const size = leaf.size * leaf.growth;
+                    const sway = Math.sin(time * 1.5 + leaf.x * 0.1) * 0.1;
+
+                    ctx.save();
+                    ctx.translate(leaf.x, leaf.y);
+                    ctx.rotate(leaf.angle + sway);
+
+                    // Draw leaf shape
+                    ctx.fillStyle = leaf.color;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.quadraticCurveTo(size * 0.5, -size * 0.3, size, 0);
+                    ctx.quadraticCurveTo(size * 0.5, size * 0.3, 0, 0);
+                    ctx.fill();
+
+                    // Leaf vein
+                    ctx.strokeStyle = 'rgba(0, 50, 0, 0.3)';
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(size * 0.8, 0);
+                    ctx.stroke();
+
+                    ctx.restore();
+                });
+
+                // Draw flowers
+                this.flowers.forEach(flower => {
+                    if (flower.size < flower.maxSize) flower.size += 0.1;
+
+                    const wobble = Math.sin(time * 2 + flower.x) * 0.05;
+
+                    ctx.save();
+                    ctx.translate(flower.x, flower.y);
+
+                    // Draw petals
+                    for (let i = 0; i < flower.petals; i++) {
+                        const angle = (i / flower.petals) * Math.PI * 2 + wobble;
+                        ctx.fillStyle = flower.color;
+                        ctx.beginPath();
+                        const px = Math.cos(angle) * flower.size * 0.5;
+                        const py = Math.sin(angle) * flower.size * 0.5;
+                        ctx.ellipse(px, py, flower.size * 0.4, flower.size * 0.2, angle, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    // Flower center
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, flower.size * 0.2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.restore();
+                });
+
+                // Draw branches
+                this.branches.forEach(branch => branch.draw());
+            }
+        }
+
+        // Initialize vines from bottom of screen
+        function initVines() {
+            vines = [];
+            const numVines = 6 + Math.floor(Math.random() * 4);
+
+            for (let i = 0; i < numVines; i++) {
+                const x = (canvas.width / (numVines + 1)) * (i + 1) + (Math.random() - 0.5) * 50;
+                const y = canvas.height + 10;
+                const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.5;
+                vines.push(new Vine(x, y, angle, true));
+            }
+        }
+
+        initVines();
+
+        // Reset when all vines are done
+        let resetTimer = 0;
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Subtle trail effect for smooth look
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grow and draw vines
+            let allDone = true;
+            vines.forEach(vine => {
+                vine.grow();
+                vine.draw();
+                if (!vine.done || vine.branches.some(b => !b.done)) {
+                    allDone = false;
+                }
+            });
+
+            // Reset after a delay when all done
+            if (allDone) {
+                resetTimer++;
+                if (resetTimer > 300) {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.02)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+                if (resetTimer > 500) {
+                    resetTimer = 0;
+                    initVines();
+                }
+            }
+
+            time += 0.02;
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initVines();
+        });
+    </script>
+</body>
+</html>

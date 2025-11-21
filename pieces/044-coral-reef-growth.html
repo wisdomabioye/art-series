@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #044 - coral-reef-growth">
+    <meta name="created" content="2025-12-07">
+    <title>coral-reef-growth | Art Series #044</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #044
+         * Title: coral-reef-growth
+         * Author: @wisdomabioye
+         * Created: 2025-12-07
+         * Description: Underwater coral reef ecosystem with branching corals, sea fans, and floating particles
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        const coralPalettes = [
+            ['#FF6B6B', '#FF8E8E', '#FFB4B4'], // Pink/Red
+            ['#FF9F43', '#FFBE76', '#FFD9A8'], // Orange
+            ['#A55EEA', '#C491E8', '#DFC0F2'], // Purple
+            ['#26DE81', '#54E89D', '#8FF0BC'], // Green
+            ['#FD79A8', '#FDA7C4', '#FDD5E4'], // Hot pink
+            ['#00CEC9', '#55E6E3', '#AAF3F1'], // Cyan
+            ['#FDCB6E', '#FDD98E', '#FEE7B4'], // Yellow
+        ];
+
+        let corals = [];
+        let particles = [];
+        let bubbles = [];
+        let time = 0;
+
+        // Branching coral
+        class BranchingCoral {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.palette = coralPalettes[Math.floor(Math.random() * coralPalettes.length)];
+                this.branches = [];
+                this.maxDepth = 4 + Math.floor(Math.random() * 3);
+                this.growth = 0;
+                this.growthSpeed = 0.008 + Math.random() * 0.005;
+                this.baseAngle = -Math.PI / 2 + (Math.random() - 0.5) * 0.4;
+                this.swayOffset = Math.random() * Math.PI * 2;
+                this.generateBranches(x, y, this.baseAngle, 40 + Math.random() * 30, 0);
+            }
+
+            generateBranches(x, y, angle, length, depth) {
+                if (depth >= this.maxDepth) return;
+
+                this.branches.push({
+                    x1: x, y1: y,
+                    angle, length,
+                    depth,
+                    thickness: Math.max(2, 8 - depth * 1.5)
+                });
+
+                const endX = x + Math.cos(angle) * length;
+                const endY = y + Math.sin(angle) * length;
+
+                const branchCount = depth === 0 ? 2 + Math.floor(Math.random() * 2) : 2;
+                const spread = 0.4 + Math.random() * 0.3;
+
+                for (let i = 0; i < branchCount; i++) {
+                    const newAngle = angle + (i - (branchCount - 1) / 2) * spread + (Math.random() - 0.5) * 0.2;
+                    const newLength = length * (0.6 + Math.random() * 0.2);
+                    this.generateBranches(endX, endY, newAngle, newLength, depth + 1);
+                }
+            }
+
+            draw() {
+                const sway = Math.sin(time + this.swayOffset) * 0.02;
+
+                this.branches.forEach(branch => {
+                    const branchGrowth = Math.min(1, this.growth * (this.maxDepth + 1) - branch.depth);
+                    if (branchGrowth <= 0) return;
+
+                    const currentLength = branch.length * branchGrowth;
+                    const swayAngle = branch.angle + sway * (branch.depth + 1);
+
+                    const endX = branch.x1 + Math.cos(swayAngle) * currentLength;
+                    const endY = branch.y1 + Math.sin(swayAngle) * currentLength;
+
+                    // Gradient color based on depth
+                    const colorIndex = Math.min(branch.depth, this.palette.length - 1);
+                    ctx.strokeStyle = this.palette[colorIndex];
+                    ctx.lineWidth = branch.thickness;
+                    ctx.lineCap = 'round';
+
+                    ctx.beginPath();
+                    ctx.moveTo(branch.x1, branch.y1);
+                    ctx.lineTo(endX, endY);
+                    ctx.stroke();
+
+                    // Polyps at tips
+                    if (branch.depth === this.maxDepth - 1 && branchGrowth > 0.8) {
+                        this.drawPolyp(endX, endY, 3 + Math.random() * 2);
+                    }
+                });
+            }
+
+            drawPolyp(x, y, size) {
+                ctx.fillStyle = this.palette[this.palette.length - 1];
+                const tentacles = 6;
+                for (let i = 0; i < tentacles; i++) {
+                    const angle = (i / tentacles) * Math.PI * 2 + time * 0.5;
+                    const tx = x + Math.cos(angle) * size;
+                    const ty = y + Math.sin(angle) * size;
+                    ctx.beginPath();
+                    ctx.arc(tx, ty, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            update() {
+                if (this.growth < 1) {
+                    this.growth += this.growthSpeed;
+                }
+            }
+        }
+
+        // Sea fan coral (flat, fan-shaped)
+        class SeaFan {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.palette = coralPalettes[Math.floor(Math.random() * coralPalettes.length)];
+                this.width = 60 + Math.random() * 50;
+                this.height = 80 + Math.random() * 60;
+                this.growth = 0;
+                this.growthSpeed = 0.006 + Math.random() * 0.004;
+                this.swayOffset = Math.random() * Math.PI * 2;
+                this.branches = this.generateFanBranches();
+            }
+
+            generateFanBranches() {
+                const branches = [];
+                const count = 8 + Math.floor(Math.random() * 6);
+
+                for (let i = 0; i < count; i++) {
+                    const t = i / (count - 1);
+                    const angle = -Math.PI / 2 + (t - 0.5) * 1.2;
+                    branches.push({
+                        angle,
+                        length: this.height * (0.7 + Math.random() * 0.3),
+                        subBranches: Math.floor(Math.random() * 4) + 2
+                    });
+                }
+                return branches;
+            }
+
+            draw() {
+                const sway = Math.sin(time * 0.8 + this.swayOffset) * 0.03;
+
+                ctx.strokeStyle = this.palette[0];
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+
+                // Main stem
+                const stemHeight = 20 * Math.min(1, this.growth * 3);
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x, this.y - stemHeight);
+                ctx.stroke();
+
+                if (this.growth < 0.3) return;
+
+                // Fan branches
+                this.branches.forEach((branch, i) => {
+                    const branchGrowth = Math.min(1, (this.growth - 0.3) / 0.7);
+                    const swayAngle = branch.angle + sway;
+                    const length = branch.length * branchGrowth;
+
+                    const startY = this.y - stemHeight;
+                    const endX = this.x + Math.cos(swayAngle) * length;
+                    const endY = startY + Math.sin(swayAngle) * length;
+
+                    ctx.strokeStyle = this.palette[0];
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, startY);
+                    ctx.lineTo(endX, endY);
+                    ctx.stroke();
+
+                    // Sub-branches
+                    if (branchGrowth > 0.5) {
+                        ctx.strokeStyle = this.palette[1];
+                        ctx.lineWidth = 1;
+                        for (let j = 1; j <= branch.subBranches; j++) {
+                            const t = j / (branch.subBranches + 1);
+                            const bx = this.x + Math.cos(swayAngle) * length * t;
+                            const by = startY + Math.sin(swayAngle) * length * t;
+                            const subAngle = swayAngle + (Math.random() - 0.5) * 0.5;
+                            const subLength = 10 + Math.random() * 15;
+
+                            ctx.beginPath();
+                            ctx.moveTo(bx, by);
+                            ctx.lineTo(
+                                bx + Math.cos(subAngle) * subLength,
+                                by + Math.sin(subAngle) * subLength
+                            );
+                            ctx.stroke();
+                        }
+                    }
+                });
+            }
+
+            update() {
+                if (this.growth < 1) {
+                    this.growth += this.growthSpeed;
+                }
+            }
+        }
+
+        // Brain/Boulder coral
+        class BrainCoral {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.palette = coralPalettes[Math.floor(Math.random() * coralPalettes.length)];
+                this.radius = 25 + Math.random() * 35;
+                this.growth = 0;
+                this.growthSpeed = 0.005 + Math.random() * 0.003;
+                this.grooves = this.generateGrooves();
+            }
+
+            generateGrooves() {
+                const grooves = [];
+                const count = 5 + Math.floor(Math.random() * 4);
+                for (let i = 0; i < count; i++) {
+                    grooves.push({
+                        offset: (Math.random() - 0.5) * this.radius * 0.8,
+                        amplitude: 3 + Math.random() * 5,
+                        frequency: 0.1 + Math.random() * 0.1
+                    });
+                }
+                return grooves;
+            }
+
+            draw() {
+                const currentRadius = this.radius * this.growth;
+                if (currentRadius < 2) return;
+
+                // Main body
+                const gradient = ctx.createRadialGradient(
+                    this.x - currentRadius * 0.2, this.y - currentRadius * 0.2, 0,
+                    this.x, this.y, currentRadius
+                );
+                gradient.addColorStop(0, this.palette[2]);
+                gradient.addColorStop(0.7, this.palette[1]);
+                gradient.addColorStop(1, this.palette[0]);
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, currentRadius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Brain grooves
+                if (this.growth > 0.5) {
+                    ctx.strokeStyle = this.palette[0];
+                    ctx.lineWidth = 1.5;
+                    ctx.globalAlpha = 0.5;
+
+                    this.grooves.forEach(groove => {
+                        ctx.beginPath();
+                        for (let x = -currentRadius * 0.8; x < currentRadius * 0.8; x += 2) {
+                            const y = groove.offset + Math.sin(x * groove.frequency + time) * groove.amplitude;
+                            const dist = Math.sqrt(x * x + y * y);
+                            if (dist < currentRadius * 0.85) {
+                                if (x === -currentRadius * 0.8) {
+                                    ctx.moveTo(this.x + x, this.y + y);
+                                } else {
+                                    ctx.lineTo(this.x + x, this.y + y);
+                                }
+                            }
+                        }
+                        ctx.stroke();
+                    });
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            update() {
+                if (this.growth < 1) {
+                    this.growth += this.growthSpeed;
+                }
+            }
+        }
+
+        // Floating particles (plankton, debris)
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = 1 + Math.random() * 2;
+                this.speedX = (Math.random() - 0.5) * 0.3;
+                this.speedY = -0.2 - Math.random() * 0.3;
+                this.alpha = 0.3 + Math.random() * 0.4;
+            }
+
+            update() {
+                this.x += this.speedX + Math.sin(time + this.y * 0.01) * 0.2;
+                this.y += this.speedY;
+
+                if (this.y < 0 || this.x < 0 || this.x > canvas.width) {
+                    this.reset();
+                    this.y = canvas.height + 10;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Bubbles
+        class Bubble {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + 20;
+                this.radius = 2 + Math.random() * 6;
+                this.speed = 0.5 + Math.random() * 1;
+                this.wobble = Math.random() * Math.PI * 2;
+            }
+
+            update() {
+                this.y -= this.speed;
+                this.x += Math.sin(time * 2 + this.wobble) * 0.5;
+
+                if (this.y < -20) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Highlight
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.beginPath();
+                ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            corals = [];
+            particles = [];
+            bubbles = [];
+
+            // Create coral reef
+            const coralCount = 6 + Math.floor(Math.random() * 4);
+            for (let i = 0; i < coralCount; i++) {
+                const x = 80 + (canvas.width - 160) * (i / (coralCount - 1)) + (Math.random() - 0.5) * 60;
+                const y = canvas.height - 30 - Math.random() * 50;
+                const type = Math.random();
+
+                if (type < 0.4) {
+                    corals.push(new BranchingCoral(x, y));
+                } else if (type < 0.7) {
+                    corals.push(new SeaFan(x, y));
+                } else {
+                    corals.push(new BrainCoral(x, y));
+                }
+            }
+
+            // Particles
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle());
+            }
+
+            // Bubbles
+            for (let i = 0; i < 15; i++) {
+                const bubble = new Bubble();
+                bubble.y = Math.random() * canvas.height;
+                bubbles.push(bubble);
+            }
+        }
+
+        init();
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Ocean gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#0a1628');
+            gradient.addColorStop(0.5, '#0d2847');
+            gradient.addColorStop(1, '#1a4a6e');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Sandy bottom
+            ctx.fillStyle = '#3d3424';
+            ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+
+            // Light rays from above
+            ctx.globalAlpha = 0.03;
+            for (let i = 0; i < 5; i++) {
+                const x = canvas.width * (0.2 + i * 0.15);
+                ctx.fillStyle = '#4a9eff';
+                ctx.beginPath();
+                ctx.moveTo(x - 30, 0);
+                ctx.lineTo(x + 30, 0);
+                ctx.lineTo(x + 80 + Math.sin(time + i) * 20, canvas.height);
+                ctx.lineTo(x - 80 + Math.sin(time + i) * 20, canvas.height);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+
+            // Update and draw particles
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // Update and draw corals
+            corals.forEach(coral => {
+                coral.update();
+                coral.draw();
+            });
+
+            // Bubbles
+            bubbles.forEach(b => {
+                b.update();
+                b.draw();
+            });
+
+            time += 0.02;
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        });
+    </script>
+</body>
+</html>

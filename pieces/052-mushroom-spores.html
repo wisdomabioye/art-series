@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #052 - mushroom-spores">
+    <meta name="created" content="2025-12-15">
+    <title>mushroom-spores | Art Series #052</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #052
+         * Title: mushroom-spores
+         * Author: @wisdomabioye
+         * Created: 2025-12-15
+         * Description: Bioluminescent mushrooms releasing glowing spores that float upward in a dark forest scene
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        let mushrooms = [];
+        let spores = [];
+        let time = 0;
+
+        const mushroomPalettes = [
+            { cap: '#00FFFF', glow: '#00FFFF', stem: '#1a4a4a' }, // Cyan
+            { cap: '#FF00FF', glow: '#FF00FF', stem: '#4a1a4a' }, // Magenta
+            { cap: '#00FF88', glow: '#00FF88', stem: '#1a4a2a' }, // Green
+            { cap: '#FFaa00', glow: '#FFaa00', stem: '#4a3a1a' }, // Orange
+            { cap: '#8866FF', glow: '#8866FF', stem: '#2a1a4a' }, // Purple
+            { cap: '#FF6688', glow: '#FF6688', stem: '#4a1a2a' }, // Pink
+        ];
+
+        class Mushroom {
+            constructor(x, y, scale = 1) {
+                this.x = x;
+                this.y = y;
+                this.scale = scale;
+                this.palette = mushroomPalettes[Math.floor(Math.random() * mushroomPalettes.length)];
+                this.capWidth = (30 + Math.random() * 30) * scale;
+                this.capHeight = (15 + Math.random() * 15) * scale;
+                this.stemWidth = (8 + Math.random() * 8) * scale;
+                this.stemHeight = (25 + Math.random() * 35) * scale;
+                this.wobbleOffset = Math.random() * Math.PI * 2;
+                this.glowIntensity = 0.5 + Math.random() * 0.3;
+                this.sporeTimer = Math.random() * 60;
+                this.sporeRate = 0.05 + Math.random() * 0.05;
+            }
+
+            update() {
+                // Release spores
+                this.sporeTimer++;
+                if (this.sporeTimer > 30 && Math.random() < this.sporeRate) {
+                    const sporeX = this.x + (Math.random() - 0.5) * this.capWidth * 0.8;
+                    const sporeY = this.y - this.stemHeight - this.capHeight * 0.3;
+                    spores.push(new Spore(sporeX, sporeY, this.palette.glow));
+                }
+            }
+
+            draw() {
+                const wobble = Math.sin(time * 0.5 + this.wobbleOffset) * 2 * this.scale;
+                const pulse = 0.8 + Math.sin(time * 2 + this.wobbleOffset) * 0.2;
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                // Glow effect
+                ctx.shadowColor = this.palette.glow;
+                ctx.shadowBlur = 30 * this.glowIntensity * pulse;
+
+                // Stem
+                const stemGradient = ctx.createLinearGradient(-this.stemWidth / 2, 0, this.stemWidth / 2, 0);
+                stemGradient.addColorStop(0, this.palette.stem);
+                stemGradient.addColorStop(0.5, this.palette.glow + '40');
+                stemGradient.addColorStop(1, this.palette.stem);
+
+                ctx.fillStyle = stemGradient;
+                ctx.beginPath();
+                ctx.moveTo(-this.stemWidth / 2, 0);
+                ctx.quadraticCurveTo(
+                    -this.stemWidth / 2 + wobble * 0.3,
+                    -this.stemHeight / 2,
+                    -this.stemWidth * 0.4 + wobble,
+                    -this.stemHeight
+                );
+                ctx.lineTo(this.stemWidth * 0.4 + wobble, -this.stemHeight);
+                ctx.quadraticCurveTo(
+                    this.stemWidth / 2 + wobble * 0.3,
+                    -this.stemHeight / 2,
+                    this.stemWidth / 2,
+                    0
+                );
+                ctx.closePath();
+                ctx.fill();
+
+                // Cap
+                const capY = -this.stemHeight;
+                const capGradient = ctx.createRadialGradient(
+                    wobble, capY - this.capHeight * 0.3, 0,
+                    wobble, capY, this.capWidth
+                );
+                capGradient.addColorStop(0, this.palette.cap);
+                capGradient.addColorStop(0.5, this.palette.cap + 'CC');
+                capGradient.addColorStop(1, this.palette.cap + '60');
+
+                ctx.fillStyle = capGradient;
+                ctx.beginPath();
+                ctx.ellipse(wobble, capY, this.capWidth / 2, this.capHeight, 0, Math.PI, 0);
+                ctx.closePath();
+                ctx.fill();
+
+                // Cap spots
+                ctx.fillStyle = this.palette.glow + '80';
+                for (let i = 0; i < 4; i++) {
+                    const spotX = wobble + (Math.random() - 0.5) * this.capWidth * 0.6;
+                    const spotY = capY - Math.random() * this.capHeight * 0.5;
+                    const spotSize = 2 + Math.random() * 3 * this.scale;
+                    ctx.beginPath();
+                    ctx.arc(spotX, spotY, spotSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Gills under cap
+                ctx.strokeStyle = this.palette.glow + '60';
+                ctx.lineWidth = 1;
+                const gillCount = 8;
+                for (let i = 0; i < gillCount; i++) {
+                    const t = i / (gillCount - 1);
+                    const gx = wobble - this.capWidth * 0.35 + t * this.capWidth * 0.7;
+                    ctx.beginPath();
+                    ctx.moveTo(gx, capY);
+                    ctx.lineTo(gx + (Math.random() - 0.5) * 2, capY + this.capHeight * 0.3);
+                    ctx.stroke();
+                }
+
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+        }
+
+        class Spore {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.size = 1 + Math.random() * 2;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = -0.3 - Math.random() * 0.5;
+                this.wobbleOffset = Math.random() * Math.PI * 2;
+                this.wobbleAmount = 0.3 + Math.random() * 0.3;
+                this.life = 1;
+                this.decay = 0.002 + Math.random() * 0.003;
+                this.glowSize = this.size * 3;
+            }
+
+            update() {
+                this.x += this.speedX + Math.sin(time * 2 + this.wobbleOffset) * this.wobbleAmount;
+                this.y += this.speedY;
+                this.speedY *= 0.999; // Slow down
+                this.life -= this.decay;
+                return this.life > 0;
+            }
+
+            draw() {
+                ctx.save();
+
+                // Glow
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = this.glowSize * this.life;
+
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.size * 2
+                );
+                gradient.addColorStop(0, this.color + 'FF');
+                gradient.addColorStop(0.5, this.color + '80');
+                gradient.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = gradient;
+                ctx.globalAlpha = this.life;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Core
+                ctx.fillStyle = '#FFFFFF';
+                ctx.globalAlpha = this.life * 0.8;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        // Forest floor elements
+        class Moss {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 20 + Math.random() * 40;
+                this.height = 5 + Math.random() * 10;
+                this.color = `rgb(${20 + Math.random() * 30}, ${50 + Math.random() * 30}, ${20 + Math.random() * 20})`;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.ellipse(this.x, this.y, this.width / 2, this.height / 2, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        let mosses = [];
+
+        function init() {
+            mushrooms = [];
+            spores = [];
+            mosses = [];
+
+            // Create mushrooms
+            const mushroomCount = 6 + Math.floor(Math.random() * 4);
+            for (let i = 0; i < mushroomCount; i++) {
+                const x = 80 + (canvas.width - 160) * (i / (mushroomCount - 1)) + (Math.random() - 0.5) * 60;
+                const y = canvas.height - 30 - Math.random() * 40;
+                const scale = 0.6 + Math.random() * 0.8;
+                mushrooms.push(new Mushroom(x, y, scale));
+            }
+
+            // Add some smaller mushrooms
+            for (let i = 0; i < 8; i++) {
+                const x = Math.random() * canvas.width;
+                const y = canvas.height - 20 - Math.random() * 30;
+                const scale = 0.3 + Math.random() * 0.4;
+                mushrooms.push(new Mushroom(x, y, scale));
+            }
+
+            // Create moss patches
+            for (let i = 0; i < 15; i++) {
+                mosses.push(new Moss(
+                    Math.random() * canvas.width,
+                    canvas.height - 10 - Math.random() * 30
+                ));
+            }
+        }
+
+        init();
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Dark forest background
+            const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            bgGradient.addColorStop(0, '#050510');
+            bgGradient.addColorStop(0.7, '#0a0a15');
+            bgGradient.addColorStop(1, '#101520');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Distant trees silhouette
+            ctx.fillStyle = '#0a0a10';
+            for (let i = 0; i < 8; i++) {
+                const tx = canvas.width * (i / 7);
+                const th = 100 + Math.sin(i * 1.5) * 50;
+                ctx.beginPath();
+                ctx.moveTo(tx - 20, canvas.height - 60);
+                ctx.lineTo(tx, canvas.height - 60 - th);
+                ctx.lineTo(tx + 20, canvas.height - 60);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Forest floor
+            ctx.fillStyle = '#0d1510';
+            ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+
+            // Draw moss
+            mosses.forEach(m => m.draw());
+
+            // Update and draw mushrooms
+            mushrooms.forEach(m => {
+                m.update();
+                m.draw();
+            });
+
+            // Update and draw spores
+            spores = spores.filter(s => {
+                s.draw();
+                return s.update();
+            });
+
+            // Ambient floating particles
+            if (Math.random() < 0.05) {
+                const color = mushroomPalettes[Math.floor(Math.random() * mushroomPalettes.length)].glow;
+                spores.push(new Spore(
+                    Math.random() * canvas.width,
+                    canvas.height - 100 - Math.random() * 200,
+                    color + '60'
+                ));
+            }
+
+            time += 0.02;
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        });
+    </script>
+</body>
+</html>

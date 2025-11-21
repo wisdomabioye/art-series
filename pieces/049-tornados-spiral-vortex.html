@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #049 - tornados-spiral-vortex">
+    <meta name="created" content="2025-12-12">
+    <title>tornados-spiral-vortex | Art Series #049</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #049
+         * Title: tornados-spiral-vortex
+         * Author: @wisdomabioye
+         * Created: 2025-12-12
+         * Description: Spinning tornado vortex with swirling debris particles, dust clouds, and dramatic storm sky
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        let particles = [];
+        let debris = [];
+        let dustClouds = [];
+        let time = 0;
+
+        // Tornado parameters
+        const tornado = {
+            x: canvas.width / 2,
+            baseY: canvas.height,
+            topY: 50,
+            baseWidth: 150,
+            topWidth: 300,
+            rotation: 0,
+            rotationSpeed: 0.03,
+            sway: 0,
+            swaySpeed: 0.005,
+            // Horizontal movement
+            velocityX: 0,
+            targetX: canvas.width / 2,
+            moveTimer: 0,
+            moveInterval: 200 + Math.random() * 200
+        };
+
+        // Funnel particle
+        class FunnelParticle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.progress = Math.random(); // 0 = bottom, 1 = top
+                this.angle = Math.random() * Math.PI * 2;
+                this.angularSpeed = 0.08 + Math.random() * 0.06;
+                this.size = 2 + Math.random() * 4;
+                this.opacity = 0.3 + Math.random() * 0.5;
+                this.verticalSpeed = 0.003 + Math.random() * 0.004;
+                this.radiusOffset = (Math.random() - 0.5) * 20;
+            }
+
+            update() {
+                this.angle += this.angularSpeed * (1 - this.progress * 0.5);
+                this.progress += this.verticalSpeed;
+
+                if (this.progress > 1) {
+                    this.reset();
+                    this.progress = 0;
+                }
+            }
+
+            getPosition() {
+                const t = this.progress;
+                const y = tornado.baseY - t * (tornado.baseY - tornado.topY);
+
+                // Funnel shape - wider at top, narrow at bottom
+                const baseRadius = tornado.baseWidth * 0.5;
+                const topRadius = tornado.topWidth * 0.5;
+                const radius = baseRadius + (topRadius - baseRadius) * Math.pow(t, 0.7) + this.radiusOffset;
+
+                const swayOffset = Math.sin(time * tornado.swaySpeed * 10 + t * 2) * 30 * t;
+                const x = tornado.x + swayOffset + Math.cos(this.angle + tornado.rotation) * radius;
+
+                return { x, y, radius };
+            }
+
+            draw() {
+                const pos = this.getPosition();
+                const alpha = this.opacity * (1 - this.progress * 0.3);
+
+                ctx.fillStyle = `rgba(120, 100, 80, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, this.size * (0.5 + this.progress * 0.5), 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Flying debris
+        class Debris {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.angle = Math.random() * Math.PI * 2;
+                this.distance = 50 + Math.random() * 150;
+                this.height = canvas.height - 100 - Math.random() * 300;
+                this.angularSpeed = 0.04 + Math.random() * 0.04;
+                this.size = 3 + Math.random() * 8;
+                this.rotationAngle = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.3;
+                this.type = Math.floor(Math.random() * 3); // 0: square, 1: triangle, 2: line
+                this.color = `rgb(${60 + Math.random() * 40}, ${50 + Math.random() * 30}, ${40 + Math.random() * 20})`;
+                this.verticalOscillation = Math.random() * Math.PI * 2;
+            }
+
+            update() {
+                this.angle += this.angularSpeed;
+                this.rotationAngle += this.rotationSpeed;
+                this.verticalOscillation += 0.05;
+
+                // Gradually pull debris closer or push away
+                this.distance += (Math.random() - 0.5) * 2;
+                if (this.distance < 30) this.distance = 30;
+                if (this.distance > 250) this.reset();
+            }
+
+            draw() {
+                const swayOffset = Math.sin(time * tornado.swaySpeed * 10 + this.height * 0.01) * 30;
+                const x = tornado.x + swayOffset + Math.cos(this.angle + tornado.rotation) * this.distance;
+                const y = this.height + Math.sin(this.verticalOscillation) * 20;
+
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(this.rotationAngle);
+                ctx.fillStyle = this.color;
+
+                if (this.type === 0) {
+                    ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                } else if (this.type === 1) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, -this.size);
+                    ctx.lineTo(this.size, this.size);
+                    ctx.lineTo(-this.size, this.size);
+                    ctx.closePath();
+                    ctx.fill();
+                } else {
+                    ctx.fillRect(-this.size, -1, this.size * 2, 2);
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // Dust cloud at base
+        class DustCloud {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = 30 + Math.random() * 50;
+                this.opacity = 0.3 + Math.random() * 0.3;
+                this.speedX = (Math.random() - 0.5) * 2;
+                this.speedY = -0.5 - Math.random() * 1;
+                this.life = 1;
+                this.decay = 0.005 + Math.random() * 0.005;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.size += 0.5;
+                this.life -= this.decay;
+                return this.life > 0;
+            }
+
+            draw() {
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.size
+                );
+                gradient.addColorStop(0, `rgba(139, 119, 101, ${this.opacity * this.life})`);
+                gradient.addColorStop(0.5, `rgba(139, 119, 101, ${this.opacity * this.life * 0.5})`);
+                gradient.addColorStop(1, 'transparent');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            particles = [];
+            debris = [];
+            dustClouds = [];
+
+            tornado.x = canvas.width / 2;
+            tornado.baseY = canvas.height;
+            tornado.topY = 50;
+
+            // Create funnel particles
+            for (let i = 0; i < 300; i++) {
+                particles.push(new FunnelParticle());
+            }
+
+            // Create debris
+            for (let i = 0; i < 40; i++) {
+                debris.push(new Debris());
+            }
+        }
+
+        init();
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Stormy sky gradient
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGradient.addColorStop(0, '#1a1a2e');
+            skyGradient.addColorStop(0.3, '#2d3a4a');
+            skyGradient.addColorStop(0.6, '#4a5568');
+            skyGradient.addColorStop(1, '#6b7280');
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Storm clouds at top
+            ctx.fillStyle = 'rgba(30, 30, 40, 0.8)';
+            for (let i = 0; i < 5; i++) {
+                const cloudX = (canvas.width / 4) * i + Math.sin(time * 0.3 + i) * 30;
+                const cloudY = 30 + Math.sin(time * 0.2 + i * 2) * 10;
+
+                for (let j = 0; j < 4; j++) {
+                    ctx.beginPath();
+                    ctx.arc(
+                        cloudX + j * 40 - 60,
+                        cloudY + Math.sin(j) * 15,
+                        40 + Math.sin(time + j) * 5,
+                        0, Math.PI * 2
+                    );
+                    ctx.fill();
+                }
+            }
+
+            // Ground
+            ctx.fillStyle = '#3d3d3d';
+            ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+
+            // Draw funnel outline/shape
+            ctx.save();
+            const swayX = Math.sin(time * tornado.swaySpeed * 10) * 30;
+
+            // Funnel body gradient
+            const funnelGradient = ctx.createLinearGradient(
+                tornado.x - tornado.topWidth / 2, 0,
+                tornado.x + tornado.topWidth / 2, 0
+            );
+            funnelGradient.addColorStop(0, 'rgba(80, 70, 60, 0.3)');
+            funnelGradient.addColorStop(0.3, 'rgba(100, 90, 75, 0.4)');
+            funnelGradient.addColorStop(0.7, 'rgba(100, 90, 75, 0.4)');
+            funnelGradient.addColorStop(1, 'rgba(80, 70, 60, 0.3)');
+
+            ctx.fillStyle = funnelGradient;
+            ctx.beginPath();
+            ctx.moveTo(tornado.x + swayX - tornado.baseWidth / 2, tornado.baseY);
+            ctx.quadraticCurveTo(
+                tornado.x + swayX * 0.5 - tornado.baseWidth * 0.3, tornado.baseY * 0.5,
+                tornado.x - tornado.topWidth / 2, tornado.topY
+            );
+            ctx.lineTo(tornado.x + tornado.topWidth / 2, tornado.topY);
+            ctx.quadraticCurveTo(
+                tornado.x + swayX * 0.5 + tornado.baseWidth * 0.3, tornado.baseY * 0.5,
+                tornado.x + swayX + tornado.baseWidth / 2, tornado.baseY
+            );
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            // Draw dust clouds
+            dustClouds = dustClouds.filter(dust => {
+                dust.draw();
+                return dust.update();
+            });
+
+            // Add new dust clouds at base
+            if (Math.random() < 0.3) {
+                const dustX = tornado.x + swayX + (Math.random() - 0.5) * tornado.baseWidth;
+                dustClouds.push(new DustCloud(dustX, canvas.height - 50));
+            }
+
+            // Update and draw particles
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // Update and draw debris
+            debris.forEach(d => {
+                d.update();
+                d.draw();
+            });
+
+            // Update tornado
+            tornado.rotation += tornado.rotationSpeed;
+
+            // Horizontal movement - pick new target periodically
+            tornado.moveTimer++;
+            if (tornado.moveTimer >= tornado.moveInterval) {
+                tornado.moveTimer = 0;
+                tornado.moveInterval = 200 + Math.random() * 200;
+                tornado.targetX = 150 + Math.random() * (canvas.width - 300);
+            }
+
+            // Smoothly move toward target
+            const dx = tornado.targetX - tornado.x;
+            tornado.velocityX += dx * 0.0005;
+            tornado.velocityX *= 0.98; // damping
+            tornado.x += tornado.velocityX;
+
+            time += 0.02;
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #046 - snowflakes-falling">
+    <meta name="created" content="2025-12-09">
+    <title>snowflakes-falling | Art Series #046</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #046
+         * Title: snowflakes-falling
+         * Author: @wisdomabioye
+         * Created: 2025-12-09
+         * Description: Detailed crystalline snowflakes gently falling with rotation and wind drift
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        let snowflakes = [];
+        let time = 0;
+        const maxSnowflakes = 60;
+
+        class Snowflake {
+            constructor(y = null) {
+                this.x = Math.random() * canvas.width;
+                this.y = y !== null ? y : -50;
+                this.size = 8 + Math.random() * 25;
+                this.speed = 0.5 + Math.random() * 1.5;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.02;
+                this.wobbleOffset = Math.random() * Math.PI * 2;
+                this.wobbleAmount = 0.5 + Math.random() * 1;
+                this.opacity = 0.6 + Math.random() * 0.4;
+                this.branches = 6;
+                this.pattern = this.generatePattern();
+            }
+
+            generatePattern() {
+                // Each snowflake has unique branch decorations
+                return {
+                    mainLength: 0.8 + Math.random() * 0.2,
+                    hasSecondary: Math.random() > 0.3,
+                    secondaryPos: 0.3 + Math.random() * 0.3,
+                    secondaryLength: 0.2 + Math.random() * 0.3,
+                    secondaryAngle: 0.4 + Math.random() * 0.4,
+                    hasTertiary: Math.random() > 0.5,
+                    tertiaryPos: 0.5 + Math.random() * 0.3,
+                    tertiaryLength: 0.1 + Math.random() * 0.2,
+                    hasCenter: Math.random() > 0.4,
+                    centerSize: 0.1 + Math.random() * 0.15,
+                    hasTips: Math.random() > 0.3,
+                    tipStyle: Math.floor(Math.random() * 3) // 0: diamond, 1: circle, 2: fork
+                };
+            }
+
+            update() {
+                // Gentle falling with wobble
+                this.y += this.speed;
+                this.x += Math.sin(time * 0.5 + this.wobbleOffset) * this.wobbleAmount;
+                this.rotation += this.rotationSpeed;
+
+                // Wind gusts
+                this.x += Math.sin(time * 0.2) * 0.3;
+
+                // Reset when off screen
+                if (this.y > canvas.height + 50) {
+                    this.y = -50;
+                    this.x = Math.random() * canvas.width;
+                }
+
+                // Wrap horizontally
+                if (this.x < -50) this.x = canvas.width + 50;
+                if (this.x > canvas.width + 50) this.x = -50;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.globalAlpha = this.opacity;
+
+                const p = this.pattern;
+                const r = this.size;
+
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.fillStyle = '#FFFFFF';
+                ctx.lineWidth = Math.max(1, this.size / 15);
+                ctx.lineCap = 'round';
+
+                // Draw 6 symmetric branches
+                for (let i = 0; i < this.branches; i++) {
+                    ctx.save();
+                    ctx.rotate((i / this.branches) * Math.PI * 2);
+
+                    // Main branch
+                    const mainLen = r * p.mainLength;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(mainLen, 0);
+                    ctx.stroke();
+
+                    // Secondary branches (symmetric pair)
+                    if (p.hasSecondary) {
+                        const secX = mainLen * p.secondaryPos;
+                        const secLen = r * p.secondaryLength;
+
+                        ctx.beginPath();
+                        ctx.moveTo(secX, 0);
+                        ctx.lineTo(
+                            secX + Math.cos(p.secondaryAngle) * secLen,
+                            Math.sin(p.secondaryAngle) * secLen
+                        );
+                        ctx.moveTo(secX, 0);
+                        ctx.lineTo(
+                            secX + Math.cos(-p.secondaryAngle) * secLen,
+                            Math.sin(-p.secondaryAngle) * secLen
+                        );
+                        ctx.stroke();
+                    }
+
+                    // Tertiary branches
+                    if (p.hasTertiary) {
+                        const terX = mainLen * p.tertiaryPos;
+                        const terLen = r * p.tertiaryLength;
+
+                        ctx.beginPath();
+                        ctx.moveTo(terX, 0);
+                        ctx.lineTo(terX + terLen * 0.7, terLen * 0.7);
+                        ctx.moveTo(terX, 0);
+                        ctx.lineTo(terX + terLen * 0.7, -terLen * 0.7);
+                        ctx.stroke();
+                    }
+
+                    // Branch tips
+                    if (p.hasTips) {
+                        const tipX = mainLen;
+                        const tipSize = r * 0.1;
+
+                        if (p.tipStyle === 0) {
+                            // Diamond
+                            ctx.beginPath();
+                            ctx.moveTo(tipX, -tipSize);
+                            ctx.lineTo(tipX + tipSize, 0);
+                            ctx.lineTo(tipX, tipSize);
+                            ctx.lineTo(tipX - tipSize * 0.5, 0);
+                            ctx.closePath();
+                            ctx.fill();
+                        } else if (p.tipStyle === 1) {
+                            // Circle
+                            ctx.beginPath();
+                            ctx.arc(tipX, 0, tipSize, 0, Math.PI * 2);
+                            ctx.fill();
+                        } else {
+                            // Fork
+                            ctx.beginPath();
+                            ctx.moveTo(tipX, 0);
+                            ctx.lineTo(tipX + tipSize, -tipSize);
+                            ctx.moveTo(tipX, 0);
+                            ctx.lineTo(tipX + tipSize, tipSize);
+                            ctx.stroke();
+                        }
+                    }
+
+                    ctx.restore();
+                }
+
+                // Center decoration
+                if (p.hasCenter) {
+                    const centerR = r * p.centerSize;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, centerR, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Inner ring
+                    ctx.globalAlpha = this.opacity * 0.5;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, centerR * 0.6, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // Simple snow particles for depth
+        class SnowParticle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = 1 + Math.random() * 3;
+                this.speed = 0.3 + Math.random() * 0.8;
+                this.opacity = 0.3 + Math.random() * 0.5;
+                this.wobbleOffset = Math.random() * Math.PI * 2;
+            }
+
+            update() {
+                this.y += this.speed;
+                this.x += Math.sin(time * 0.8 + this.wobbleOffset) * 0.3;
+
+                if (this.y > canvas.height) {
+                    this.y = -5;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        let particles = [];
+
+        function init() {
+            snowflakes = [];
+            particles = [];
+
+            // Create detailed snowflakes
+            for (let i = 0; i < maxSnowflakes; i++) {
+                const flake = new Snowflake(Math.random() * canvas.height);
+                snowflakes.push(flake);
+            }
+
+            // Create simple particles for depth
+            for (let i = 0; i < 100; i++) {
+                particles.push(new SnowParticle());
+            }
+        }
+
+        init();
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Winter night sky gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#0a1628');
+            gradient.addColorStop(0.5, '#1a2a4a');
+            gradient.addColorStop(1, '#2a3a5a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Snow accumulation at bottom
+            ctx.fillStyle = '#e8f0f8';
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            for (let x = 0; x <= canvas.width; x += 40) {
+                const y = canvas.height - 20 - Math.sin(x * 0.03 + time * 0.1) * 8 - Math.random() * 3;
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.fill();
+
+            // Draw distant particles first (background)
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // Update and draw snowflakes
+            snowflakes.forEach(flake => {
+                flake.update();
+                flake.draw();
+            });
+
+            time += 0.02;
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@wisdomabioye">
+    <meta name="description" content="Art Series #042 - tree-rings-forming">
+    <meta name="created" content="2025-12-06">
+    <title>tree-rings-forming | Art Series #042</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+         * Art Series #042
+         * Title: tree-rings-forming
+         * Author: @wisdomabioye
+         * Created: 2025-12-06
+         * Description: Cross-section view of tree rings forming over time with organic texture and growth patterns
+         */
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // ============================================
+        // MAIN ANIMATION CODE
+        // ============================================
+
+        // Wood color palette
+        const woodColors = {
+            light: ['#D4A574', '#C49A6C', '#DEB887', '#D2B48C'],
+            dark: ['#8B7355', '#6B5344', '#5D4E37', '#8B4513'],
+            bark: ['#3D2B1F', '#4A3728', '#2F1F14', '#5C4033']
+        };
+
+        let rings = [];
+        let time = 0;
+        let centerX, centerY;
+        let maxRadius;
+
+        class Ring {
+            constructor(radius, isGrowthRing = true) {
+                this.targetRadius = radius;
+                this.currentRadius = radius - 8;
+                this.thickness = isGrowthRing ? 2 + Math.random() * 4 : 1 + Math.random() * 2;
+                this.isGrowthRing = isGrowthRing;
+
+                // Color based on ring type
+                if (isGrowthRing) {
+                    this.color = woodColors.dark[Math.floor(Math.random() * woodColors.dark.length)];
+                } else {
+                    this.color = woodColors.light[Math.floor(Math.random() * woodColors.light.length)];
+                }
+
+                // Organic irregularity - points around the ring
+                this.points = [];
+                const pointCount = 60 + Math.floor(Math.random() * 20);
+                for (let i = 0; i < pointCount; i++) {
+                    const angle = (i / pointCount) * Math.PI * 2;
+                    // Natural variation in radius
+                    const variation = (Math.random() - 0.5) * 6;
+                    const waveVariation = Math.sin(angle * 3 + Math.random()) * 2;
+                    this.points.push({
+                        angle,
+                        offset: variation + waveVariation
+                    });
+                }
+
+                this.grown = false;
+                this.growthSpeed = 0.15 + Math.random() * 0.1;
+            }
+
+            update() {
+                if (this.currentRadius < this.targetRadius) {
+                    this.currentRadius += this.growthSpeed;
+                    if (this.currentRadius >= this.targetRadius) {
+                        this.currentRadius = this.targetRadius;
+                        this.grown = true;
+                    }
+                }
+            }
+
+            draw() {
+                if (this.currentRadius <= 0) return;
+
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = this.thickness;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                ctx.beginPath();
+
+                // Draw organic ring using points
+                const growthRatio = this.currentRadius / this.targetRadius;
+
+                for (let i = 0; i <= this.points.length; i++) {
+                    const point = this.points[i % this.points.length];
+                    const r = this.currentRadius + point.offset * growthRatio;
+                    const x = centerX + Math.cos(point.angle) * r;
+                    const y = centerY + Math.sin(point.angle) * r;
+
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+
+                ctx.closePath();
+                ctx.stroke();
+            }
+        }
+
+        // Create radial crack/ray patterns (medullary rays)
+        class Ray {
+            constructor() {
+                this.angle = Math.random() * Math.PI * 2;
+                this.length = 50 + Math.random() * (maxRadius * 0.8);
+                this.width = 0.5 + Math.random() * 1;
+                this.color = woodColors.light[Math.floor(Math.random() * woodColors.light.length)];
+                this.startRadius = 5 + Math.random() * 20;
+            }
+
+            draw() {
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = this.width;
+                ctx.globalAlpha = 0.3;
+
+                ctx.beginPath();
+                const startX = centerX + Math.cos(this.angle) * this.startRadius;
+                const startY = centerY + Math.sin(this.angle) * this.startRadius;
+                const endX = centerX + Math.cos(this.angle) * (this.startRadius + this.length);
+                const endY = centerY + Math.sin(this.angle) * (this.startRadius + this.length);
+
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        let rays = [];
+        let nextRingRadius = 8;
+        let ringSpacing = 6;
+        let isGrowthRing = true;
+
+        function init() {
+            centerX = canvas.width / 2;
+            centerY = canvas.height / 2;
+            maxRadius = Math.min(canvas.width, canvas.height) * 0.45;
+
+            rings = [];
+            rays = [];
+            nextRingRadius = 8;
+            isGrowthRing = true;
+
+            // Create medullary rays
+            const rayCount = 15 + Math.floor(Math.random() * 10);
+            for (let i = 0; i < rayCount; i++) {
+                rays.push(new Ray());
+            }
+
+            // Start with center/pith
+            rings.push(new Ring(8, true));
+        }
+
+        init();
+
+        // ============================================
+        // ANIMATION LOOP
+        // ============================================
+
+        function animate() {
+            // Wood background
+            ctx.fillStyle = '#2a1f14';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw bark circle (outer boundary)
+            const barkGradient = ctx.createRadialGradient(
+                centerX, centerY, maxRadius - 20,
+                centerX, centerY, maxRadius + 30
+            );
+            barkGradient.addColorStop(0, woodColors.bark[0]);
+            barkGradient.addColorStop(0.5, woodColors.bark[1]);
+            barkGradient.addColorStop(1, woodColors.bark[2]);
+
+            ctx.fillStyle = barkGradient;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, maxRadius + 30, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw wood base (light color)
+            ctx.fillStyle = '#C4A876';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, maxRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw rays first (behind rings)
+            rays.forEach(ray => ray.draw());
+
+            // Update and draw rings
+            rings.forEach(ring => {
+                ring.update();
+                ring.draw();
+            });
+
+            // Add new rings as previous ones finish growing
+            const lastRing = rings[rings.length - 1];
+            if (lastRing && lastRing.grown && nextRingRadius < maxRadius) {
+                // Vary ring spacing for natural look
+                const spacing = ringSpacing + (Math.random() - 0.5) * 3;
+                nextRingRadius += spacing;
+
+                // Alternate between growth rings (dark) and earlywood (light)
+                isGrowthRing = !isGrowthRing;
+
+                if (nextRingRadius < maxRadius) {
+                    rings.push(new Ring(nextRingRadius, isGrowthRing));
+                }
+            }
+
+            // Draw center pith
+            const pithGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 8);
+            pithGradient.addColorStop(0, '#5D4037');
+            pithGradient.addColorStop(1, '#3E2723');
+            ctx.fillStyle = pithGradient;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw ring count
+            const ringCount = Math.floor(rings.filter(r => r.isGrowthRing && r.grown).length);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.font = '16px monospace';
+            ctx.fillText(`Years: ${ringCount}`, 20, 30);
+
+            // Reset when complete
+            if (nextRingRadius >= maxRadius && lastRing && lastRing.grown) {
+                time++;
+                if (time > 200) {
+                    time = 0;
+                    init();
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ============================================
+        // RESPONSIVE RESIZE
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        });
+    </script>
+</body>
+</html>
